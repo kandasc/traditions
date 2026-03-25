@@ -36,7 +36,8 @@ Payments:
 - `SAYELEPAY_API_KEY`
 - `SAYELEPAY_SECRET`
 - `SAYELEPAY_MERCHANT_ID`
-- `SAYELEPAY_INIT_PATH`
+- `SAYELEPAY_INIT_PATH` (full URL or path; e.g. `https://api…/api/v1/payment-intents`)
+- `SAYELEPAY_RESPONSE_URL_KEY` (optional) — dotted path to the redirect URL if auto-detection fails, e.g. `data.checkout_link`
 
 AI (optional):
 - `OPENAI_API_KEY`
