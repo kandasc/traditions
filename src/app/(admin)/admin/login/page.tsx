@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("admin@local");
@@ -27,11 +27,22 @@ export default function AdminLoginPage() {
               const res = await signIn("credentials", {
                 email,
                 password,
-                redirect: true,
-                callbackUrl: "/admin",
+                redirect: false,
               });
-              if (res?.error) setError("Email ou mot de passe incorrect.");
-              setLoading(false);
+              if (res?.error) {
+                setError("Email ou mot de passe incorrect.");
+                setLoading(false);
+                return;
+              }
+              const session = await getSession();
+              if (session?.user?.role !== "admin") {
+                setError("Ce compte n’est pas administrateur.");
+                setLoading(false);
+                await signOut({ redirect: false });
+                return;
+              }
+              await fetch("/api/cart/merge", { method: "POST" });
+              window.location.href = "/admin";
             }}
           >
             <label className="flex flex-col gap-2">

@@ -1,8 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { PayNowButton } from "@/components/PayNowButton";
+import { AddToCartSection } from "@/components/AddToCartSection";
 import { SmartImage } from "@/components/SmartImage";
 
 export default async function ProductPage({
@@ -32,6 +31,12 @@ export default async function ProductPage({
     }
   }
   const colors = [...colorsMap.values()];
+
+  const variantOptions = product.variants.map((v) => ({
+    id: v.id,
+    sizeLabel: v.sizeLabel,
+    colorHex: v.colorHex,
+  }));
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
@@ -128,11 +133,11 @@ export default async function ProductPage({
         ) : null}
 
         <div className="flex flex-col gap-3">
-          <PayNowButton productId={product.id} />
-          <p className="text-xs text-zinc-500">
-            Le panier/checkout sera branché au gateway de paiement que vous
-            fournirez (interface déjà prévue).
-          </p>
+          {product.priceXof ? (
+            <AddToCartSection productId={product.id} variants={variantOptions} />
+          ) : (
+            <p className="text-sm text-zinc-600">Prix sur demande.</p>
+          )}
         </div>
 
         {product.description ? (

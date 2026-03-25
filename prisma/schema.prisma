@@ -45,10 +45,13 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String?
-  role          String    @default("admin")
+  /// "admin" | "customer"
+  role          String    @default("customer")
 
   accounts Account[]
   sessions Session[]
+  orders   Order[]
+  cart     Cart?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,17 +102,23 @@ model Order {
   customerName  String?
   notes      String?
 
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   items      OrderItem[]
   payments   Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
   productId String?
+  variantId String?
   name      String
   quantity  Int     @default(1)
   unitPriceXof Int
@@ -117,6 +126,7 @@ model OrderItem {
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
 }
@@ -174,6 +184,7 @@ model Product {
   images     ProductImage[]
   variants   ProductVariant[]
   orderItems OrderItem[]
+  cartItems  CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,8 +212,36 @@ model ProductVariant {
   stock        Int?
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  orderItems OrderItem[]
 
   @@index([productId])
+}
+
+model Cart {
+  id         String   @id @default(cuid())
+  userId     String?  @unique
+  guestToken String?  @unique
+
+  user  User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  cartId    String
+  productId String
+  variantId String?
+  quantity  Int    @default(1)
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([cartId])
 }
 
 model Page {
@@ -220,5 +259,17 @@ model SiteSetting {
   id        String @id @default(cuid())
   key       String @unique
   value     String
+  updatedAt DateTime @updatedAt
+}
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  sortOrder Int      @default(0)
+  imageUrl  String
+  alt       String?
+  href      String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

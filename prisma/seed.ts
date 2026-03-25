@@ -125,7 +125,9 @@ async function main() {
       role: "admin",
       passwordHash: await bcrypt.hash(adminPassword, 10),
     },
-    update: {},
+    update: {
+      role: "admin",
+    },
   });
 
   await prisma.page.upsert({

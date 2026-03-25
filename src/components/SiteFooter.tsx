@@ -4,7 +4,20 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-zinc-200/70 bg-white">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-zinc-500">© {new Date().getFullYear()} Traditions</p>
+        <div className="flex flex-col gap-1 text-zinc-500 sm:flex-row sm:items-center sm:gap-3">
+          <p>© {new Date().getFullYear()} Traditions</p>
+          <p className="text-xs sm:text-sm">
+            Built by{" "}
+            <a
+              className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-950"
+              href="https://sayele.co"
+              target="_blank"
+              rel="noreferrer"
+            >
+              SAYELE
+            </a>
+          </p>
+        </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <Link className="hover:text-zinc-950" href="/contacts">
             Contacts

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { HeroPanelSlider } from "@/components/HeroPanelSlider";
 import { SmartImage } from "@/components/SmartImage";
 
 const HOMEPAGE_HERO_FALLBACK_IMAGE =
   "https://traditions-mode.com/public/images/accueil1.jpg";
+const HERO_BG_KEY = "hero.backgroundImageUrl";
 
 export default async function HomePage() {
-  const [featured, anyProductImage] = await Promise.all([
+  const [featured, anyProductImage, heroBg, heroSlides] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: [
@@ -21,12 +23,27 @@ export default async function HomePage() {
       orderBy: { sortOrder: "asc" },
       select: { url: true },
     }),
+    prisma.siteSetting.findUnique({ where: { key: HERO_BG_KEY } }),
+    prisma.heroSlide.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
-  const heroPanelSrc =
+  const heroBackgroundUrl =
+    heroBg?.value?.trim() || HOMEPAGE_HERO_FALLBACK_IMAGE;
+
+  const heroPanelFallback =
     featured[0]?.images?.[0]?.url ??
     anyProductImage?.url ??
     HOMEPAGE_HERO_FALLBACK_IMAGE;
+
+  const sliderSlides = heroSlides.map((s) => ({
+    id: s.id,
+    imageUrl: s.imageUrl,
+    alt: s.alt,
+    href: s.href,
+  }));
 
   return (
     <div className="flex flex-col gap-12">
@@ -34,8 +51,7 @@ export default async function HomePage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage:
-              "url(https://traditions-mode.com/public/images/accueil1.jpg)",
+            backgroundImage: `url(${heroBackgroundUrl})`,
           }}
         />
         <div className="absolute inset-0 bg-black/55" />
@@ -67,22 +83,11 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
-            <div className="relative aspect-[4/3] w-full">
-              <SmartImage
-                src={heroPanelSrc}
-                alt="Traditions"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-                fallbackClassName="bg-black/25"
-                proxyWidth={1100}
-                proxyQuality={72}
-              />
-            </div>
-          </div>
+          <HeroPanelSlider
+            slides={sliderSlides}
+            fallbackUrl={heroPanelFallback}
+            fallbackAlt="Traditions"
+          />
         </div>
       </section>
 

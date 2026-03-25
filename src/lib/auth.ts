@@ -8,10 +8,9 @@ import bcrypt from "bcryptjs";
  * break or flake in production with the credentials provider).
  */
 export const authOptions: NextAuthOptions = {
-  // Required for JWT sessions in production (omit → flaky decrypt / RSC errors).
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
-  pages: { signIn: "/admin/login" },
+  pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -30,27 +29,40 @@ export const authOptions: NextAuthOptions = {
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
-        return { id: user.id, email: user.email, name: user.name } as any;
+        return {
+          id: user.id,
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+          role: user.role,
+        };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id as string;
+        token.sub = user.id;
         if (user.email) token.email = user.email;
         if (user.name) token.name = user.name;
+        token.role = user.role;
+      }
+      if (token.sub && token.role == null) {
+        const u = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { role: true },
+        });
+        token.role = u?.role ?? "customer";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        if (token.sub) (session.user as any).id = token.sub;
+        if (token.sub) session.user.id = token.sub;
         if (token.email) session.user.email = token.email as string;
         if (token.name) session.user.name = token.name as string;
+        session.user.role = (token.role as string) ?? "customer";
       }
       return session;
     },
   },
 };
-

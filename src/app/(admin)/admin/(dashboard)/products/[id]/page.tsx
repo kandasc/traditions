@@ -1,46 +1,20 @@
 import { prisma } from "@/lib/db";
-import { notFound, redirect } from "next/navigation";
-import slugify from "slugify";
+import { notFound } from "next/navigation";
+import { deleteProduct, updateProduct } from "./actions";
+import { DeleteProductForm } from "./delete-product-form";
 
-async function updateProduct(id: string, formData: FormData) {
-  "use server";
-
-  const name = String(formData.get("name") ?? "").trim();
-  const slugRaw = String(formData.get("slug") ?? "").trim();
-  const isActive = formData.get("isActive") === "on";
-  const priceXofRaw = String(formData.get("priceXof") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const details = String(formData.get("details") ?? "").trim();
-
-  if (!name) throw new Error("Name is required");
-
-  const slug =
-    slugify(slugRaw || name, { lower: true, strict: true }) ||
-    `produit-${id}`;
-
-  const existing = await prisma.product.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
-
-  if (slug !== existing.slug) {
-    const conflict = await prisma.product.findUnique({ where: { slug } });
-    if (conflict) throw new Error("Slug already exists");
-  }
-
-  const priceXof = priceXofRaw ? Number(priceXofRaw) : null;
-
-  await prisma.product.update({
-    where: { id },
-    data: {
-      name,
-      slug,
-      isActive,
-      priceXof: Number.isFinite(priceXof as any) ? (priceXof as any) : null,
-      description: description || null,
-      details: details || null,
-    },
-  });
-
-  redirect(`/admin/products/${id}`);
+function serializeVariants(
+  variants: {
+    sizeLabel: string | null;
+    colorHex: string | null;
+    imageUrl: string | null;
+  }[],
+) {
+  return variants
+    .map((v) =>
+      [v.sizeLabel ?? "", v.colorHex ?? "", v.imageUrl ?? ""].join(" | "),
+    )
+    .join("\n");
 }
 
 export default async function AdminProductEditPage({
@@ -49,14 +23,29 @@ export default async function AdminProductEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      variants: { orderBy: { id: "asc" } },
+    },
+  });
   if (!product) return notFound();
+
+  const imageLines = product.images
+    .map((im) => (im.alt ? `${im.url}\t${im.alt}` : im.url))
+    .join("\n");
+
+  const variantLines = serializeVariants(product.variants);
 
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-semibold text-zinc-950">Éditer produit</h1>
       <p className="mt-2 text-sm text-zinc-600">
-        Images/variantes/cart/checkout seront ajoutés ensuite.
+        Images: une URL par ligne (optionnel: tab puis texte alternatif).
+        Variantes:{" "}
+        <span className="font-mono text-xs">taille | #couleur | url_image</span>{" "}
+        par ligne.
       </p>
 
       <form
@@ -94,15 +83,57 @@ export default async function AdminProductEditPage({
             inputMode="numeric"
           />
         </label>
-        <label className="flex items-center gap-3">
-          <input
-            name="isActive"
-            defaultChecked={product.isActive}
-            type="checkbox"
-            className="h-4 w-4"
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">
+          <label className="flex items-center gap-3">
+            <input
+              name="isActive"
+              defaultChecked={product.isActive}
+              type="checkbox"
+              className="h-4 w-4"
+            />
+            <span className="text-sm text-zinc-800">
+              Actif (visible sur le site)
+            </span>
+          </label>
+          <label className="flex items-center gap-3">
+            <input
+              name="featured"
+              defaultChecked={product.featured}
+              type="checkbox"
+              className="h-4 w-4"
+            />
+            <span className="text-sm text-zinc-800">Mis en avant (accueil)</span>
+          </label>
+        </div>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            Images (URLs)
+          </span>
+          <textarea
+            name="imageUrls"
+            defaultValue={imageLines}
+            placeholder={
+              "https://…\nhttps://…\n(alt: URL puis tab puis texte)"
+            }
+            className="min-h-32 rounded-xl border border-zinc-200 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-zinc-400"
           />
-          <span className="text-sm text-zinc-800">Actif</span>
         </label>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            Variantes
+          </span>
+          <textarea
+            name="variants"
+            defaultValue={variantLines}
+            placeholder={
+              "SMALL | #f5ec00 | https://…\nM | #ff0000 |\n | #00ff00 |"
+            }
+            className="min-h-32 rounded-xl border border-zinc-200 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-zinc-400"
+          />
+        </label>
+
         <label className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
             Description
@@ -139,7 +170,8 @@ export default async function AdminProductEditPage({
           </a>
         </div>
       </form>
+
+      <DeleteProductForm deleteProductWithId={deleteProduct.bind(null, id)} />
     </div>
   );
 }
-
