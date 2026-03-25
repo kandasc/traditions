@@ -2,13 +2,31 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { SmartImage } from "@/components/SmartImage";
 
+const HOMEPAGE_HERO_FALLBACK_IMAGE =
+  "https://traditions-mode.com/public/images/accueil1.jpg";
+
 export default async function HomePage() {
-  const featured = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
-    take: 8,
-    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-  });
+  const [featured, anyProductImage] = await Promise.all([
+    prisma.product.findMany({
+      where: { isActive: true },
+      orderBy: [
+        { featured: "desc" },
+        { sortOrder: "asc" },
+        { createdAt: "desc" },
+      ],
+      take: 8,
+      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    }),
+    prisma.productImage.findFirst({
+      orderBy: { sortOrder: "asc" },
+      select: { url: true },
+    }),
+  ]);
+
+  const heroPanelSrc =
+    featured[0]?.images?.[0]?.url ??
+    anyProductImage?.url ??
+    HOMEPAGE_HERO_FALLBACK_IMAGE;
 
   return (
     <div className="flex flex-col gap-12">
@@ -53,13 +71,13 @@ export default async function HomePage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
             <div className="relative aspect-[4/3] w-full">
               <SmartImage
-                src={featured[0]?.images?.[0]?.url}
+                src={heroPanelSrc}
                 alt="Traditions"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
-                fallbackClassName="bg-white/10"
+                fallbackClassName="bg-black/25"
                 proxyWidth={1100}
                 proxyQuality={72}
               />
@@ -112,6 +130,12 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
+        {featured.length === 0 ? (
+          <p className="text-sm text-zinc-600">
+            Aucun produit en base pour le moment. Importez les données (seed) ou
+            ajoutez des produits depuis l’admin.
+          </p>
+        ) : null}
       </section>
     </div>
   );

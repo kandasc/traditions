@@ -2,6 +2,8 @@ import crypto from "crypto";
 import path from "path";
 import sharp from "sharp";
 
+export const runtime = "nodejs";
+
 const ALLOWED_HOSTNAMES = new Set([
   "admin.traditions-mode.com",
   "traditions-mode.com",
