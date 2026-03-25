@@ -7,6 +7,7 @@ export type VariantOption = {
   id: string;
   sizeLabel: string | null;
   colorHex: string | null;
+  stock?: number | null;
 };
 
 function normHex(s: string | null | undefined): string {
@@ -107,11 +108,33 @@ export function AddToCartSection({
     selectedColorHex,
   ]);
 
+  const selectedVariantStock = useMemo(() => {
+    if (!variantId) return null;
+    const v = deduped.find((x) => x.id === variantId);
+    return v?.stock ?? null;
+  }, [deduped, variantId]);
+
+  const maxQty = useMemo(() => {
+    if (selectedVariantStock == null) return null; // unlimited
+    const s = Math.max(0, Number(selectedVariantStock) || 0);
+    return s > 0 ? s : 0;
+  }, [selectedVariantStock]);
+
+  useEffect(() => {
+    // If stock is limited and quantity is above it, clamp.
+    if (maxQty == null) return;
+    setQuantity((q) => Math.min(q, Math.max(1, maxQty)));
+  }, [maxQty]);
+
   const add = async () => {
     setLoading(true);
     setError(null);
     setOk(false);
     try {
+      if (maxQty != null && maxQty <= 0) {
+        setError("Rupture de stock.");
+        return;
+      }
       const res = await fetch("/api/cart/items", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -217,6 +240,7 @@ export function AddToCartSection({
         <input
           type="number"
           min={1}
+          max={maxQty == null ? undefined : maxQty}
           value={quantity}
           onChange={(e) =>
             setQuantity(Math.max(1, Number(e.target.value) || 1))
@@ -227,7 +251,11 @@ export function AddToCartSection({
 
       <button
         type="button"
-        disabled={loading || (deduped.length > 0 && !variantId)}
+        disabled={
+          loading ||
+          (deduped.length > 0 && !variantId) ||
+          (maxQty != null && maxQty <= 0)
+        }
         className="inline-flex items-center justify-center rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
         onClick={add}
       >

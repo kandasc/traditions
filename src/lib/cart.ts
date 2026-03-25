@@ -86,6 +86,12 @@ export async function getCartPayload() {
   const items = [];
   for (const line of cart.items) {
     if (!line.product?.isActive || line.product.priceXof == null) continue;
+    if (
+      line.variantId &&
+      line.variant?.stock != null &&
+      line.variant.stock <= 0
+    )
+      continue;
     const lineTotal = line.product.priceXof * line.quantity;
     subtotalXof += lineTotal;
     items.push({
@@ -142,6 +148,7 @@ export async function getValidatedCartLinesForCheckout(): Promise<{
     if (line.variantId) {
       const v = line.variant;
       if (!v || v.productId !== p.id || !v.isActive) continue;
+      if (v.stock != null && v.stock <= 0) continue;
     }
     const qty = Math.max(1, line.quantity);
     const unit = p.priceXof;

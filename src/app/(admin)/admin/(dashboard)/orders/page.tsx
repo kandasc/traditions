@@ -14,6 +14,7 @@ export default async function AdminOrdersPage() {
     take: 100,
     include: {
       user: { select: { email: true, name: true } },
+      deliveryZone: { select: { name: true } },
     },
   });
 
@@ -42,6 +43,7 @@ export default async function AdminOrdersPage() {
                   {statusFr[o.status] ?? o.status}
                   {o.user?.email ? ` · ${o.user.email}` : ""}
                   {o.customerEmail && !o.user ? ` · ${o.customerEmail}` : ""}
+                  {o.deliveryZone?.name ? ` · ${o.deliveryZone.name}` : ""}
                 </p>
               </div>
               <span className="mt-2 text-sm text-zinc-950 sm:mt-0">

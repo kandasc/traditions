@@ -20,10 +20,20 @@ export default async function ProductPage({
 
   if (!product || !product.isActive) return notFound();
 
-  const variantOptions = product.variants.map((v) => ({
+  const inStockVariants = product.variants.filter(
+    (v) => v.stock == null || v.stock > 0,
+  );
+
+  // If a product has variants but all are out of stock, do not show it as available.
+  if (product.variants.length > 0 && inStockVariants.length === 0) {
+    return notFound();
+  }
+
+  const variantOptions = inStockVariants.map((v) => ({
     id: v.id,
     sizeLabel: v.sizeLabel,
     colorHex: v.colorHex,
+    stock: v.stock,
   }));
 
   return (

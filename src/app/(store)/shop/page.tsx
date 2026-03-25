@@ -4,7 +4,21 @@ import { SmartImage } from "@/components/SmartImage";
 
 export default async function ShopPage() {
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      OR: [
+        {
+          variants: {
+            some: {
+              isActive: true,
+              OR: [{ stock: null }, { stock: { gt: 0 } }],
+            },
+          },
+        },
+        // Products without variants stay visible as long as they are active.
+        { variants: { none: { isActive: true } } },
+      ],
+    },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
   });

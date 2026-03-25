@@ -36,6 +36,10 @@ export async function POST(req: Request) {
     if (!v) {
       return Response.json({ error: "Variante invalide" }, { status: 400 });
     }
+    const stock = v.stock;
+    if (stock != null && stock <= 0) {
+      return Response.json({ error: "Rupture de stock" }, { status: 400 });
+    }
   } else if (product.variants.length > 0) {
     return Response.json(
       { error: "Choisissez une variante (taille / couleur)" },
@@ -52,12 +56,40 @@ export async function POST(req: Request) {
     where: { cartId, productId, variantId },
   });
 
+  // If the variant has a limited stock, enforce that cart quantity can't exceed it.
   if (existing) {
+    if (variantId) {
+      const v = product.variants.find((x) => x.id === variantId);
+      const stock = v?.stock ?? null;
+      if (stock != null) {
+        const nextQty = existing.quantity + quantity;
+        if (nextQty > stock) {
+          return Response.json(
+            {
+              error: `Stock insuffisant (disponible: ${stock}).`,
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
     await prisma.cartItem.update({
       where: { id: existing.id },
       data: { quantity: existing.quantity + quantity },
     });
   } else {
+    if (variantId) {
+      const v = product.variants.find((x) => x.id === variantId);
+      const stock = v?.stock ?? null;
+      if (stock != null && quantity > stock) {
+        return Response.json(
+          {
+            error: `Stock insuffisant (disponible: ${stock}).`,
+          },
+          { status: 400 },
+        );
+      }
+    }
     await prisma.cartItem.create({
       data: { cartId, productId, variantId, quantity },
     });

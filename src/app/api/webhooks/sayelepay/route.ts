@@ -51,24 +51,72 @@ export async function POST(req: Request) {
           ? "FAILED"
           : "PENDING";
 
-  await prisma.payment.update({
-    where: { id: payment.id },
-    data: {
-      status: status as any,
-      rawWebhookJson: raw,
-    },
-  });
-
   if (status === "SUCCEEDED") {
-    await prisma.order.update({
-      where: { id: payment.orderId },
-      data: { status: "PAID" },
+    // Decrement stock only on the transition into SUCCEEDED.
+    const updateRes = await prisma.payment.updateMany({
+      where: { id: payment.id, status: { not: "SUCCEEDED" } },
+      data: { status: "SUCCEEDED", rawWebhookJson: raw },
     });
-  } else if (status === "FAILED" || status === "CANCELLED") {
-    await prisma.order.update({
-      where: { id: payment.orderId },
-      data: { status: status === "CANCELLED" ? "CANCELLED" : "FAILED" },
+
+    if (updateRes.count > 0) {
+      const order = await prisma.order.findUnique({
+        where: { id: payment.orderId },
+        include: { items: true },
+      });
+
+      if (order) {
+        const variantIds = order.items
+          .map((it) => it.variantId)
+          .filter((x): x is string => typeof x === "string");
+
+        if (variantIds.length > 0) {
+          const variants = await prisma.productVariant.findMany({
+            where: { id: { in: variantIds } },
+            select: { id: true, stock: true },
+          });
+          const stockById = new Map(
+            variants.map((v) => [v.id, v.stock] as const),
+          );
+
+          for (const it of order.items) {
+            if (!it.variantId) continue;
+            const cur = stockById.get(it.variantId);
+            if (cur == null) continue; // null => unlimited
+            const next = Math.max(0, cur - it.quantity);
+            await prisma.productVariant.update({
+              where: { id: it.variantId },
+              data: { stock: next },
+            });
+          }
+        }
+      }
+
+      await prisma.order.update({
+        where: { id: payment.orderId },
+        data: { status: "PAID" },
+      });
+    } else {
+      // Already succeeded; refresh raw payload only.
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { rawWebhookJson: raw },
+      });
+    }
+  } else {
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: status as any,
+        rawWebhookJson: raw,
+      },
     });
+
+    if (status === "FAILED" || status === "CANCELLED") {
+      await prisma.order.update({
+        where: { id: payment.orderId },
+        data: { status: status === "CANCELLED" ? "CANCELLED" : "FAILED" },
+      });
+    }
   }
 
   return Response.json({ ok: true });

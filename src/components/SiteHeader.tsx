@@ -45,9 +45,14 @@ export function SiteHeader() {
           className="flex items-center gap-2 text-lg font-semibold tracking-wide text-zinc-950 dark:text-zinc-50"
         >
           <img
+            src="/sayele-logo-black.svg"
+            alt="SAYELE"
+            className="h-5 w-auto dark:hidden"
+          />
+          <img
             src="/sayele-logo-white.svg"
             alt="SAYELE"
-            className="h-5 w-auto filter invert dark:invert-0"
+            className="hidden h-5 w-auto dark:block"
           />
           Traditions
         </Link>
