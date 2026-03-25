@@ -27,7 +27,7 @@ export default async function AdminDashboardLayout({
               className="h-6 w-auto"
             />
             <div className="text-sm font-semibold text-zinc-50">
-              Admin <span className="text-zinc-400">— Traditions</span>
+              Admin
             </div>
           </Link>
           <nav className="flex flex-wrap items-center gap-5 text-sm text-zinc-300">
