@@ -31,14 +31,16 @@ Required:
 - `NEXTAUTH_SECRET` (generate a long random string)
 - `NEXTAUTH_URL` = `https://YOUR_PROD_DOMAIN`
 
-Payments:
-- `SAYELEPAY_API_BASE`
-- `SAYELEPAY_API_KEY`
-- `SAYELEPAY_SECRET`
-- `SAYELEPAY_MERCHANT_ID`
-- `SAYELEPAY_INIT_PATH` (full URL or path; e.g. `https://api…/api/v1/payment-intents`)
-- `SAYELEPAY_RESPONSE_URL_KEY` (optional) — dotted path to the redirect URL if auto-detection fails, e.g. `data.checkout_link`
-- `SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE` (often **required**) — if the API returns a Stripe-like **PaymentIntent** (`id`, `client_secret`) without a URL, set the **public** payment page URL from SayelePay. Placeholders: `{id}`, `{client_secret}`, `{reference}` (URL-encoded); `{id_raw}`, `{client_secret_raw}`, `{reference_raw}` without encoding.
+Payments (SayelePay — [API docs](https://www.sayelepay.com/api-docs), [SDK / checkout](https://www.sayelepay.com/sdk)):
+- `SAYELEPAY_API_BASE` — e.g. `https://api.sayelepay.com/api/v1` ([base URL in docs](https://www.sayelepay.com/api-docs))
+- `SAYELEPAY_API_KEY` — secret key `sk_test_…` / `sk_live_…` ([Authentication](https://www.sayelepay.com/api-docs))
+- `NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY` — **required for browser checkout**: `pk_test_…` / `pk_live_…` (used by `SayeleGateSDK` + `client_secret` from `POST /payment-intents`)
+- `SAYELEPAY_SECRET` — webhook signature (if configured)
+- `SAYELEPAY_MERCHANT_ID` (optional)
+- `SAYELEPAY_INIT_PATH` (optional) — default `/payment-intents` relative to `SAYELEPAY_API_BASE`
+- `SAYELEPAY_PAYMENT_METHOD_TYPES` (optional) — JSON array, default `["card","mobile_money"]`
+- `SAYELEPAY_RESPONSE_URL_KEY` (optional) — dotted path if the API returns a direct redirect URL
+- `SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE` (optional) — only if you use a custom hosted URL instead of the SDK
 
 AI (optional):
 - `OPENAI_API_KEY`

@@ -86,13 +86,15 @@ export default function CheckoutPage() {
               }),
             });
             const text = await res.text();
-            let data: { error?: string; checkoutUrl?: string } = {};
+            let data: {
+              error?: string;
+              checkoutUrl?: string;
+              clientSecret?: string;
+              orderId?: string;
+            } = {};
             if (text.trim()) {
               try {
-                data = JSON.parse(text) as {
-                  error?: string;
-                  checkoutUrl?: string;
-                };
+                data = JSON.parse(text) as typeof data;
               } catch {
                 throw new Error(
                   "Réponse serveur illisible. Vérifiez la configuration du paiement.",
@@ -106,10 +108,34 @@ export default function CheckoutPage() {
             if (!res.ok) {
               throw new Error(data.error ?? "Erreur de commande");
             }
-            if (!data.checkoutUrl || typeof data.checkoutUrl !== "string") {
-              throw new Error("URL de paiement manquante");
+            const orderId = data.orderId as string | undefined;
+            const url = data.checkoutUrl as string | undefined;
+            const secret = data.clientSecret as string | undefined;
+            if (url && typeof url === "string") {
+              window.location.href = url;
+              return;
             }
-            window.location.href = data.checkoutUrl;
+            if (secret && orderId) {
+              const pk = process.env.NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY;
+              if (!pk) {
+                throw new Error(
+                  "NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY manquant (clé publique pk_test_… / pk_live_… du tableau de bord SayelePay). Voir https://www.sayelepay.com/sdk",
+                );
+              }
+              const { redirectToSayelePayCheckout } = await import(
+                "@/lib/sayelepay-sdk-client"
+              );
+              await redirectToSayelePayCheckout({
+                publishableKey: pk,
+                clientSecret: secret,
+                successUrl: `${window.location.origin}/checkout/success?orderId=${encodeURIComponent(orderId)}`,
+                cancelUrl: `${window.location.origin}/cart`,
+              });
+              return;
+            }
+            throw new Error(
+              "Réponse SayelePay incomplète (pas d’URL ni de client_secret).",
+            );
           } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Erreur");
             setSubmitting(false);

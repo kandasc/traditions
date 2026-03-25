@@ -3,6 +3,19 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
+import { extractClientSecret } from "@/lib/payments/sayelepay";
+import { ResumeSayelePayButton } from "@/components/ResumeSayelePayButton";
+import type { Payment } from "@prisma/client";
+
+function canResumeSayeleSdk(p: Payment | undefined): boolean {
+  if (!p?.rawInitResponseJson) return false;
+  try {
+    const raw = JSON.parse(p.rawInitResponseJson) as unknown;
+    return !!extractClientSecret(raw);
+  } catch {
+    return false;
+  }
+}
 
 const statusFr: Record<string, string> = {
   PENDING: "En attente de paiement",
@@ -74,13 +87,22 @@ export default async function OrderDetailPage({
         </p>
       </section>
 
-      {order.payments[0]?.checkoutUrl && order.status === "PENDING" ? (
-        <a
-          href={order.payments[0].checkoutUrl}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800"
-        >
-          Reprendre le paiement
-        </a>
+      {order.status === "PENDING" && order.payments[0] ? (
+        order.payments[0].checkoutUrl ? (
+          <a
+            href={order.payments[0].checkoutUrl}
+            className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200"
+          >
+            Reprendre le paiement
+          </a>
+        ) : canResumeSayeleSdk(order.payments[0]) ? (
+          <ResumeSayelePayButton orderId={order.id} />
+        ) : (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Paiement SayelePay sans lien direct. Contactez-nous ou refaites une
+            commande si besoin.
+          </p>
+        )
       ) : null}
     </div>
   );

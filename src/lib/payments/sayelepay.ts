@@ -1,5 +1,11 @@
 import crypto from "crypto";
 
+/**
+ * SayelePay REST API v1 — see https://www.sayelepay.com/api-docs
+ * Hosted checkout uses SayeleGate SDK client-side with `client_secret` from POST /payment-intents
+ * — see https://www.sayelepay.com/sdk
+ */
+
 export type SayelePayInitRequest = {
   amountXof: number;
   reference: string;
@@ -11,7 +17,10 @@ export type SayelePayInitRequest = {
 };
 
 export type SayelePayInitResult = {
-  checkoutUrl: string;
+  /** Present only if the API returns a direct redirect URL. */
+  checkoutUrl: string | null;
+  /** Present for standard PaymentIntent flow — use with SayeleGateSDK.redirectToCheckout */
+  clientSecret?: string;
   externalReference?: string;
   raw: unknown;
 };
@@ -22,7 +31,6 @@ function mustEnv(key: string) {
   return v;
 }
 
-/** Keys providers often use for the customer redirect URL (ordered). */
 const CHECKOUT_URL_KEYS = [
   "checkoutUrl",
   "checkout_url",
@@ -50,9 +58,6 @@ function isHttpUrl(s: string): boolean {
   return /^https?:\/\//i.test(s.trim());
 }
 
-/**
- * Extract payment redirect URL from arbitrary JSON shapes (nested data/result/…).
- */
 export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
   if (typeof raw === "string") {
     const t = raw.trim();
@@ -90,7 +95,6 @@ export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
   return null;
 }
 
-/** Stripe-style PaymentIntent when payment requires redirect. */
 function extractStripeNextActionUrl(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
@@ -103,12 +107,6 @@ function extractStripeNextActionUrl(raw: unknown): string | null {
   return null;
 }
 
-/**
- * When the API returns only a PaymentIntent (id + client_secret) and no URL,
- * build the customer URL from SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE.
- * Placeholders: {id}, {payment_intent}, {client_secret} (URL-encoded),
- * {id_raw}, {client_secret_raw} (not encoded — use with care).
- */
 function buildHostedCheckoutFromTemplate(
   raw: unknown,
   orderReference?: string,
@@ -139,6 +137,19 @@ function buildHostedCheckoutFromTemplate(
   return isHttpUrl(out) ? out : null;
 }
 
+export function extractClientSecret(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const s = o.client_secret;
+  if (typeof s === "string" && s.trim()) return s.trim();
+  const d = o.data;
+  if (d && typeof d === "object") {
+    const cs = (d as Record<string, unknown>).client_secret;
+    if (typeof cs === "string" && cs.trim()) return cs.trim();
+  }
+  return null;
+}
+
 function getNested(
   obj: Record<string, unknown>,
   path: string,
@@ -161,33 +172,65 @@ function summarizeJsonKeys(raw: unknown, depth = 0): string {
   return `{${keys.join(", ")}${Object.keys(raw as object).length > 25 ? ", …" : ""}}`;
 }
 
+function buildPaymentIntentPayload(req: SayelePayInitRequest): Record<string, unknown> {
+  let paymentMethodTypes: string[] = ["card", "mobile_money"];
+  const rawTypes = process.env.SAYELEPAY_PAYMENT_METHOD_TYPES?.trim();
+  if (rawTypes) {
+    try {
+      const parsed = JSON.parse(rawTypes) as unknown;
+      if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) {
+        paymentMethodTypes = parsed as string[];
+      }
+    } catch {
+      /* keep default */
+    }
+  }
+
+  const payload: Record<string, unknown> = {
+    amount: req.amountXof,
+    currency: "XOF",
+    payment_method_types: paymentMethodTypes,
+    description: req.description ?? `Paiement ${req.reference}`,
+    return_url: req.returnUrl,
+  };
+
+  if (req.customerEmail) {
+    payload.customer_email = req.customerEmail;
+  }
+
+  if (req.customerName) {
+    payload.customer_name = req.customerName;
+  }
+
+  const merchantId = process.env.SAYELEPAY_MERCHANT_ID?.trim();
+  if (merchantId) {
+    payload.merchant_id = merchantId;
+  }
+
+  if (req.webhookUrl) {
+    payload.callback_url = req.webhookUrl;
+  }
+
+  payload.metadata = { reference: req.reference };
+
+  return payload;
+}
+
 /**
- * NOTE: Payload/response mapping may need tuning to SayelePay’s exact contract.
- * Set SAYELEPAY_RESPONSE_URL_KEY=dotted.path (e.g. data.link) if the URL lives in a fixed field.
+ * POST /payment-intents — request shape per https://www.sayelepay.com/api-docs
  */
 export async function sayelepayInit(
   req: SayelePayInitRequest,
 ): Promise<SayelePayInitResult> {
   const base = mustEnv("SAYELEPAY_API_BASE").replace(/\/$/, "");
-  const pathOrUrl = process.env.SAYELEPAY_INIT_PATH ?? "/api/payments/init";
+  const pathOrUrl =
+    process.env.SAYELEPAY_INIT_PATH ?? "/payment-intents";
   const url = pathOrUrl.startsWith("http")
     ? pathOrUrl
     : `${base}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
 
   const apiKey = mustEnv("SAYELEPAY_API_KEY");
-  const merchantId = process.env.SAYELEPAY_MERCHANT_ID;
-
-  const payload: Record<string, unknown> = {
-    merchantId,
-    amount: req.amountXof,
-    currency: "XOF",
-    reference: req.reference,
-    returnUrl: req.returnUrl,
-    callbackUrl: req.webhookUrl,
-    customerEmail: req.customerEmail,
-    customerName: req.customerName,
-    description: req.description,
-  };
+  const payload = buildPaymentIntentPayload(req);
 
   const res = await fetch(url, {
     method: "POST",
@@ -210,17 +253,18 @@ export async function sayelepayInit(
     throw new Error(`SayelePay init failed: ${res.status} ${rawText.slice(0, 500)}`);
   }
 
+  const clientSecret = extractClientSecret(raw);
+
   const checkoutUrl =
     extractCheckoutUrlFromResponse(raw) ??
     extractStripeNextActionUrl(raw) ??
     buildHostedCheckoutFromTemplate(raw, req.reference);
 
-  if (!checkoutUrl) {
+  if (!checkoutUrl && !clientSecret) {
     const hint = summarizeJsonKeys(raw);
     throw new Error(
-      `SayelePay: la réponse est un PaymentIntent sans URL publique (aperçu ${hint}). ` +
-        `Ajoutez SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE avec les placeholders {id} et optionnellement {client_secret} ` +
-        `(URL indiquée par SayelePay pour ouvrir la page de paiement), ou utilisez un endpoint qui renvoie déjà une URL.`,
+      `SayelePay: réponse sans client_secret ni URL (aperçu ${hint}). ` +
+        `Vérifiez la clé secrète et l’URL d’init (doc: https://www.sayelepay.com/api-docs).`,
     );
   }
 
@@ -234,27 +278,17 @@ export async function sayelepayInit(
   const externalReference =
     (typeof obj?.reference === "string" && obj.reference) ||
     (typeof obj?.transactionId === "string" && obj.transactionId) ||
-    (obj?.data &&
-      typeof obj.data === "object" &&
-      typeof (obj.data as Record<string, unknown>).reference === "string" &&
-      (obj.data as Record<string, unknown>).reference) ||
-    (obj?.data &&
-      typeof obj.data === "object" &&
-      typeof (obj.data as Record<string, unknown>).transactionId === "string" &&
-      (obj.data as Record<string, unknown>).transactionId) ||
     piId;
 
   return {
-    checkoutUrl,
+    checkoutUrl: checkoutUrl ?? null,
+    clientSecret: clientSecret ?? undefined,
     externalReference:
       typeof externalReference === "string" ? externalReference : undefined,
     raw,
   };
 }
 
-/**
- * Webhook signature verification (placeholder).
- */
 export function verifySayelepaySignatureOrThrow(
   bodyRaw: string,
   signatureHeader: string | null,

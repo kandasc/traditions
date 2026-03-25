@@ -27,16 +27,16 @@ POSTGRES_PASSWORD="CHANGE_ME"
 OPENAI_API_KEY=""
 OPENAI_MODEL="gpt-4.1-mini"
 
-# SayelePay
-SAYELEPAY_API_BASE="https://api.sayelepay.com"
-SAYELEPAY_API_KEY="..."
+# SayelePay — https://www.sayelepay.com/api-docs — base includes /api/v1
+SAYELEPAY_API_BASE="https://api.sayelepay.com/api/v1"
+SAYELEPAY_API_KEY="sk_live_..."
 SAYELEPAY_SECRET="..."
 SAYELEPAY_MERCHANT_ID="Traditions"
-SAYELEPAY_INIT_PATH="https://api.sayelepay.com/api/v1/payment-intents"
+# Optional; default is /payment-intents
+# SAYELEPAY_INIT_PATH="/payment-intents"
 
-# If the init response is a PaymentIntent without checkoutUrl, SayelePay usually
-# gives a separate hosted URL pattern — ask them, then e.g.:
-# SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE="https://…?payment_intent={id}&client_secret={client_secret}"
+# Public key for SayeleGate SDK (https://www.sayelepay.com/sdk) — required in the browser
+NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY="pk_live_..."
 ```
 
 ### 3) Build + run

@@ -108,7 +108,8 @@ export async function POST(req: Request) {
 
     return Response.json({
       orderId: order.id,
-      checkoutUrl: init.checkoutUrl,
+      checkoutUrl: init.checkoutUrl ?? undefined,
+      clientSecret: init.clientSecret,
     });
   }
 
@@ -189,6 +190,7 @@ export async function POST(req: Request) {
 
   return Response.json({
     orderId: order.id,
-    checkoutUrl: init.checkoutUrl,
+    checkoutUrl: init.checkoutUrl ?? undefined,
+    clientSecret: init.clientSecret,
   });
 }

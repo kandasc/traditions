@@ -1,6 +1,19 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { extractClientSecret } from "@/lib/payments/sayelepay";
+import { ResumeSayelePayButton } from "@/components/ResumeSayelePayButton";
+import type { Payment } from "@prisma/client";
+
+function canResumeSayeleSdk(p: Payment | undefined): boolean {
+  if (!p?.rawInitResponseJson) return false;
+  try {
+    const raw = JSON.parse(p.rawInitResponseJson) as unknown;
+    return !!extractClientSecret(raw);
+  } catch {
+    return false;
+  }
+}
 
 const statusFr: Record<string, string> = {
   PENDING: "En attente de paiement",
@@ -85,16 +98,26 @@ export default async function AdminOrderDetailPage({
             <li key={p.id} className="border-b border-zinc-100 py-2 last:border-0">
               {p.provider} — {p.status} —{" "}
               {p.amountXof.toLocaleString("fr-FR")} FCFA
-              {p.checkoutUrl && order.status === "PENDING" ? (
-                <div className="mt-1">
-                  <a
-                    className="text-xs font-semibold underline"
-                    href={p.checkoutUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Lien de paiement
-                  </a>
+              {order.status === "PENDING" && p.status === "PENDING" ? (
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {p.checkoutUrl ? (
+                    <a
+                      className="text-xs font-semibold underline"
+                      href={p.checkoutUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Lien de paiement
+                    </a>
+                  ) : canResumeSayeleSdk(p) ? (
+                    <ResumeSayelePayButton
+                      orderId={order.id}
+                      cancelPath={`/admin/orders/${order.id}`}
+                      className="inline-flex h-8 items-center rounded-lg bg-zinc-950 px-3 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+                    >
+                      Ouvrir SayelePay (SDK)
+                    </ResumeSayelePayButton>
+                  ) : null}
                 </div>
               ) : null}
             </li>

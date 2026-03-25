@@ -2,14 +2,19 @@ import { sayelepayInit } from "./sayelepay";
 import type { SayelePayInitRequest } from "./sayelepay";
 
 export type InitPaymentResult =
-  | { ok: true; checkoutUrl: string; externalReference?: string; raw: unknown }
+  | {
+      ok: true;
+      checkoutUrl: string | null;
+      clientSecret?: string;
+      externalReference?: string;
+      raw: unknown;
+    }
   | { ok: false; message: string };
 
 function missingEnvHint(): string {
   const need = [
     "SAYELEPAY_API_BASE",
     "SAYELEPAY_API_KEY",
-    "SAYELEPAY_INIT_PATH",
   ].filter((k) => !process.env[k]);
   if (need.length === 0) {
     return "Le fournisseur de paiement a refusé la demande ou la réponse est invalide.";
@@ -28,6 +33,7 @@ export async function sayelepayInitSafe(
     return {
       ok: true,
       checkoutUrl: result.checkoutUrl,
+      clientSecret: result.clientSecret,
       externalReference: result.externalReference,
       raw: result.raw,
     };
