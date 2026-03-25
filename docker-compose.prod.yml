@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: traditions
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-traditions}
+      POSTGRES_DB: traditions
+    volumes:
+      - traditions_pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://traditions:${POSTGRES_PASSWORD:-traditions}@db:5432/traditions?schema=public
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      SAYELEPAY_API_BASE: ${SAYELEPAY_API_BASE}
+      SAYELEPAY_API_KEY: ${SAYELEPAY_API_KEY}
+      SAYELEPAY_SECRET: ${SAYELEPAY_SECRET}
+      SAYELEPAY_MERCHANT_ID: ${SAYELEPAY_MERCHANT_ID}
+      SAYELEPAY_INIT_PATH: ${SAYELEPAY_INIT_PATH}
+      IMAGE_CACHE_DIR: /app/.cache/images
+    ports:
+      - "3000:3000"
+    volumes:
+      - traditions_image_cache:/app/.cache/images
+
+volumes:
+  traditions_pgdata:
+  traditions_image_cache:
+

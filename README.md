@@ -1,3 +1,33 @@
+# Traditions (rebuild)
+
+Modern rebuild of `traditions-mode.com` with a dynamic backend (admin) and an AI assistant.
+
+## Run locally
+
+```bash
+cd traditions
+npm install
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
+```
+
+Open:
+- Storefront: `http://localhost:3000`
+- Admin: `http://localhost:3000/admin`
+
+Default admin credentials (seed):
+- Email: `admin@local`
+- Password: `admin123`
+
+## AI assistant
+
+Set in `.env`:
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` (optional)
+
+The widget appears on the storefront and calls `POST /api/ai/chat`.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

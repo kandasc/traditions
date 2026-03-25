@@ -1,0 +1,49 @@
+import Link from "next/link";
+
+export function SiteFooter() {
+  return (
+    <footer className="mt-auto border-t border-zinc-200/70 bg-white">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-zinc-500">© {new Date().getFullYear()} Traditions</p>
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link className="hover:text-zinc-950" href="/contacts">
+            Contacts
+          </Link>
+          <a
+            className="hover:text-zinc-950"
+            href="https://www.facebook.com/share/3DE39quvWo8VvnRP/?mibextid=LQQJ4d"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Facebook
+          </a>
+          <a
+            className="hover:text-zinc-950"
+            href="https://www.instagram.com/__.traditions.__?igsh=MWN3cW5xMTlrc2Zqdg=="
+            target="_blank"
+            rel="noreferrer"
+          >
+            Instagram
+          </a>
+          <a
+            className="hover:text-zinc-950"
+            href="https://snapchat.com/t/jM3nyGWc"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Snapchat
+          </a>
+          <a
+            className="hover:text-zinc-950"
+            href="https://www.tiktok.com/@traditionsontiktok?_t=8qjtLOjabCq&_r=1"
+            target="_blank"
+            rel="noreferrer"
+          >
+            TikTok
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
