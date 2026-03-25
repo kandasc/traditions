@@ -93,7 +93,7 @@ export default async function AdminOrderDetailPage({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Lien SayelePay
+                    Lien de paiement
                   </a>
                 </div>
               ) : null}

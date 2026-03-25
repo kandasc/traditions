@@ -21,11 +21,11 @@ function CartBadge() {
   return (
     <Link
       href="/cart"
-      className="relative inline-flex items-center rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50"
+      className="relative inline-flex items-center rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
     >
       Panier
       {count > 0 ? (
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-950 px-1 text-[10px] font-bold text-white">
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-950 px-1 text-[10px] font-bold text-white dark:bg-zinc-100 dark:text-zinc-950">
           {count > 99 ? "99+" : count}
         </span>
       ) : null}
@@ -38,36 +38,36 @@ export function SiteHeader() {
   const isAdmin = session?.user?.role === "admin";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-700/80 dark:bg-zinc-950/80">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-wide text-zinc-950"
+          className="text-lg font-semibold tracking-wide text-zinc-950 dark:text-zinc-50"
         >
           Traditions
         </Link>
-        <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-zinc-700 sm:gap-6">
-          <Link className="hover:text-zinc-950" href="/shop">
+        <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-zinc-700 sm:gap-6 dark:text-zinc-300">
+          <Link className="hover:text-zinc-950 dark:hover:text-white" href="/shop">
             Shop
           </Link>
-          <Link className="hover:text-zinc-950" href="/about">
+          <Link className="hover:text-zinc-950 dark:hover:text-white" href="/about">
             La marque
           </Link>
-          <Link className="hover:text-zinc-950" href="/atelier">
+          <Link className="hover:text-zinc-950 dark:hover:text-white" href="/atelier">
             L’atelier
           </Link>
           <CartBadge />
           {status === "loading" ? null : session ? (
             <>
               <Link
-                className="hover:text-zinc-950"
+                className="hover:text-zinc-950 dark:hover:text-white"
                 href="/compte"
               >
                 Mon compte
               </Link>
               <button
                 type="button"
-                className="text-left hover:text-zinc-950"
+                className="text-left hover:text-zinc-950 dark:hover:text-white"
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
                 Déconnexion
@@ -75,7 +75,7 @@ export function SiteHeader() {
             </>
           ) : (
             <Link
-              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50"
+              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
               href="/login"
             >
               Connexion
@@ -83,7 +83,7 @@ export function SiteHeader() {
           )}
           {isAdmin ? (
             <Link
-              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50"
+              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
               href="/admin"
             >
               Admin

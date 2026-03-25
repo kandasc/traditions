@@ -17,8 +17,7 @@ export default async function CheckoutSuccessPage({
         Paiement reçu (en cours de confirmation)
       </h1>
       <p className="text-sm leading-7 text-zinc-700">
-        Merci. Nous confirmons la transaction dès réception du retour de SayelePay
-        (webhook).
+        Merci. Nous confirmons la commande dès validation du paiement.
       </p>
       {order ? (
         <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">

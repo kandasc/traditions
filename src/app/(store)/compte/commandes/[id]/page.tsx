@@ -79,7 +79,7 @@ export default async function OrderDetailPage({
           href={order.payments[0].checkoutUrl}
           className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800"
         >
-          Reprendre le paiement SayelePay
+          Reprendre le paiement
         </a>
       ) : null}
     </div>

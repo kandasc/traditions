@@ -7,7 +7,7 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <SiteHeader />
-      <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl flex-1 bg-[var(--background)] px-4 py-10 text-[var(--foreground)]">
         {children}
       </div>
       <SiteFooter />

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { sayelepayInit } from "@/lib/payments/sayelepay";
+import { sayelepayInitSafe } from "@/lib/payments/sayelepay-safe";
 import {
   clearGuestCartCookie,
   emptyCartById,
@@ -10,13 +10,18 @@ import { authOptions } from "@/lib/auth";
 import { nanoid } from "nanoid";
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as {
+  let body: {
     productId?: string;
     quantity?: number;
     customerEmail?: string;
     customerName?: string;
     fromCart?: boolean;
   };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return Response.json({ error: "Corps de requête invalide" }, { status: 400 });
+  }
 
   const session = await getServerSession(authOptions);
   const sessionUserId = session?.user?.id;
@@ -25,6 +30,8 @@ export async function POST(req: Request) {
   let customerName = body.customerName?.toString().trim() || null;
   if (session?.user?.email) customerEmail = session.user.email;
   if (session?.user?.name) customerName = session.user.name;
+
+  const origin = new URL(req.url).origin;
 
   if (body.fromCart) {
     const cartCheckout = await getValidatedCartLinesForCheckout();
@@ -41,6 +48,9 @@ export async function POST(req: Request) {
 
     const amountXof = cartCheckout.subtotalXof;
     const reference = `TRD-${nanoid(10)}`;
+    const returnUrl = `${origin}/checkout/success?orderId=`;
+    const webhookUrl = `${origin}/api/webhooks/sayelepay`;
+    const descNames = cartCheckout.lines.map((l) => l.name).join(", ");
 
     const order = await prisma.order.create({
       data: {
@@ -63,25 +73,20 @@ export async function POST(req: Request) {
       },
     });
 
-    await emptyCartById(cartCheckout.cartId);
-    if (cartCheckout.guestToken) {
-      await clearGuestCartCookie();
-    }
-
-    const origin = new URL(req.url).origin;
-    const returnUrl = `${origin}/checkout/success?orderId=${order.id}`;
-    const webhookUrl = `${origin}/api/webhooks/sayelepay`;
-
-    const descNames = cartCheckout.lines.map((l) => l.name).join(", ");
-    const init = await sayelepayInit({
+    const init = await sayelepayInitSafe({
       amountXof,
       reference,
-      returnUrl,
+      returnUrl: `${returnUrl}${order.id}`,
       webhookUrl,
       customerEmail: customerEmail ?? undefined,
       customerName: customerName ?? undefined,
       description: `Commande ${order.id} — ${descNames.slice(0, 120)}`,
     });
+
+    if (!init.ok) {
+      await prisma.order.delete({ where: { id: order.id } });
+      return Response.json({ error: init.message }, { status: 502 });
+    }
 
     await prisma.payment.create({
       data: {
@@ -95,6 +100,11 @@ export async function POST(req: Request) {
         rawInitResponseJson: JSON.stringify(init.raw),
       },
     });
+
+    await emptyCartById(cartCheckout.cartId);
+    if (cartCheckout.guestToken) {
+      await clearGuestCartCookie();
+    }
 
     return Response.json({
       orderId: order.id,
@@ -146,11 +156,10 @@ export async function POST(req: Request) {
     },
   });
 
-  const origin = new URL(req.url).origin;
   const returnUrl = `${origin}/checkout/success?orderId=${order.id}`;
   const webhookUrl = `${origin}/api/webhooks/sayelepay`;
 
-  const init = await sayelepayInit({
+  const init = await sayelepayInitSafe({
     amountXof,
     reference,
     returnUrl,
@@ -159,6 +168,11 @@ export async function POST(req: Request) {
     customerName: customerName ?? undefined,
     description: `Commande ${order.id} — ${product.name}`,
   });
+
+  if (!init.ok) {
+    await prisma.order.delete({ where: { id: order.id } });
+    return Response.json({ error: init.message }, { status: 502 });
+  }
 
   await prisma.payment.create({
     data: {
