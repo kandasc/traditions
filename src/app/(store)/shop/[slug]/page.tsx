@@ -38,7 +38,7 @@ export default async function ProductPage({
   }));
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2">
+    <div className="grid gap-8 sm:gap-10 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
         {product.images[0]?.url ? (
           <ProductImageMagnifier
@@ -52,11 +52,11 @@ export default async function ProductPage({
         ) : (
           <div className="aspect-[4/5] w-full rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900" />
         )}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:thin] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-4 sm:overflow-visible sm:pb-0 touch-pan-x">
           {product.images.slice(0, 8).map((img) => (
             <div
               key={img.id}
-              className="relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"
+              className="relative aspect-square w-[28vw] max-w-[6.75rem] shrink-0 snap-start overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 sm:max-w-none sm:w-auto dark:border-zinc-700 dark:bg-zinc-900"
             >
               <SmartImage
                 src={img.url}
@@ -80,7 +80,7 @@ export default async function ProductPage({
 
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl dark:text-zinc-50">
             {product.name}
           </h1>
           <div className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">

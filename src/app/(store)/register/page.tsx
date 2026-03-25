@@ -13,9 +13,11 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-        <h1 className="text-xl font-semibold text-zinc-950">Créer un compte</h1>
-        <p className="mt-2 text-sm text-zinc-600">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-950 sm:p-8">
+        <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+          Créer un compte
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Votre compte permet d’enregistrer le panier et de suivre vos commandes.
         </p>
 
@@ -55,7 +57,7 @@ export default function RegisterPage() {
               Nom
             </span>
             <input
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:text-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
@@ -66,7 +68,7 @@ export default function RegisterPage() {
               Email
             </span>
             <input
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:text-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
@@ -79,7 +81,7 @@ export default function RegisterPage() {
               Mot de passe (8 caractères min.)
             </span>
             <input
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
@@ -89,10 +91,12 @@ export default function RegisterPage() {
             />
           </label>
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          ) : null}
 
           <button
-            className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-6 text-base font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:text-sm"
             type="submit"
             disabled={loading}
           >
@@ -100,9 +104,12 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-sm text-zinc-600">
+        <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
           Déjà inscrit ?{" "}
-          <Link className="font-semibold text-zinc-950 underline" href="/login">
+          <Link
+            className="font-semibold text-zinc-950 underline dark:text-zinc-50"
+            href="/login"
+          >
             Se connecter
           </Link>
         </p>

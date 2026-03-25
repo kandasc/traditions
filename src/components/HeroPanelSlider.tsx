@@ -73,7 +73,7 @@ export function HeroPanelSlider({ slides, fallbackUrl, fallbackAlt }: Props) {
             <button
               type="button"
               aria-label="Image précédente"
-              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 px-2 py-2 text-white backdrop-blur hover:bg-black/55"
+              className="absolute left-1 top-1/2 z-10 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-lg text-white backdrop-blur active:bg-black/60 sm:left-2 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
               onClick={() => go(-1)}
             >
               ‹
@@ -81,18 +81,18 @@ export function HeroPanelSlider({ slides, fallbackUrl, fallbackAlt }: Props) {
             <button
               type="button"
               aria-label="Image suivante"
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 px-2 py-2 text-white backdrop-blur hover:bg-black/55"
+              className="absolute right-1 top-1/2 z-10 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-lg text-white backdrop-blur active:bg-black/60 sm:right-2 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
               onClick={() => go(1)}
             >
               ›
             </button>
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
               {activeSlides.map((s, i) => (
                 <button
                   key={s.id}
                   type="button"
                   aria-label={`Slide ${i + 1}`}
-                  className={`h-2 w-2 rounded-full transition-colors ${
+                  className={`h-3 w-3 rounded-full transition-colors sm:h-2 sm:w-2 ${
                     i === Math.min(index, len - 1)
                       ? "bg-white"
                       : "bg-white/40 hover:bg-white/70"

@@ -47,7 +47,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <section className="relative overflow-hidden rounded-3xl border border-zinc-200">
+      <section className="relative overflow-hidden rounded-2xl border border-zinc-200 sm:rounded-3xl dark:border-zinc-700">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -55,12 +55,12 @@ export default async function HomePage() {
           }}
         />
         <div className="absolute inset-0 bg-black/55" />
-        <div className="relative grid gap-6 p-8 md:grid-cols-2 md:items-center">
+        <div className="relative grid gap-6 p-6 sm:p-8 md:grid-cols-2 md:items-center">
           <div className="flex flex-col gap-4">
             <p className="text-sm font-medium uppercase tracking-widest text-zinc-200">
               Traditions
             </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
               Authenticité et traditions,
               <span className="block text-zinc-200">pensées pour le présent.</span>
             </h1>
@@ -71,13 +71,13 @@ export default async function HomePage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/shop"
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-zinc-950 hover:bg-zinc-100 sm:text-sm"
               >
                 Découvrir le shop
               </Link>
               <Link
                 href="/atelier"
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-base font-semibold text-white backdrop-blur hover:bg-white/15 sm:text-sm"
               >
                 L’atelier sur mesure
               </Link>
@@ -92,26 +92,29 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-col gap-6">
-        <div className="flex items-end justify-between gap-6">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end sm:gap-6">
           <div className="flex flex-col gap-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
               Sélection
             </h2>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Les pièces disponibles actuellement.
             </p>
           </div>
-          <Link className="text-sm font-semibold text-zinc-950" href="/shop">
+          <Link
+            className="min-h-11 shrink-0 text-sm font-semibold text-zinc-950 dark:text-zinc-50"
+            href="/shop"
+          >
             Voir tout →
           </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {featured.map((p) => (
             <Link
               key={p.id}
               href={`/shop/${p.slug}`}
-              className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm"
+              className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
             >
               <div className="relative aspect-[4/5] w-full bg-zinc-50">
                 {p.images[0]?.url ? (
@@ -126,9 +129,11 @@ export default async function HomePage() {
                   />
                 ) : null}
               </div>
-              <div className="flex flex-col gap-1 p-4">
-                <p className="text-sm font-semibold text-zinc-950">{p.name}</p>
-                <p className="text-xs text-zinc-600">
+              <div className="flex flex-col gap-1 p-3 sm:p-4">
+                <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 sm:text-sm">
+                  {p.name}
+                </p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {p.priceXof ? `${p.priceXof.toLocaleString("fr-FR")} FCFA` : "—"}
                 </p>
               </div>

@@ -166,7 +166,7 @@ export function AddToCartSection({
   const sectionTitle =
     "text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300";
   const chipBase =
-    "rounded-full border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500";
+    "min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500";
 
   return (
     <div className="flex flex-col gap-5">
@@ -214,7 +214,7 @@ export function AddToCartSection({
                       aria-label={`Couleur ${raw}`}
                       aria-pressed={active}
                       onClick={() => setSelectedColorHex(raw)}
-                      className={`relative h-10 w-10 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-black ${
+                      className={`relative h-11 w-11 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-zinc-400 sm:h-10 sm:w-10 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-black ${
                         active
                           ? "border-zinc-950 ring-2 ring-zinc-950 ring-offset-2 dark:border-white dark:ring-white"
                           : "border-zinc-300 dark:border-zinc-500"
@@ -245,7 +245,7 @@ export function AddToCartSection({
           onChange={(e) =>
             setQuantity(Math.max(1, Number(e.target.value) || 1))
           }
-          className="h-11 w-28 rounded-xl border border-zinc-200 bg-white px-3 text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className="h-12 w-full max-w-[10rem] rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:h-11 sm:w-28 sm:text-sm"
         />
       </label>
 
@@ -256,7 +256,7 @@ export function AddToCartSection({
           (deduped.length > 0 && !variantId) ||
           (maxQty != null && maxQty <= 0)
         }
-        className="inline-flex items-center justify-center rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-6 text-base font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:w-auto sm:py-3 sm:text-sm"
         onClick={add}
       >
         {loading ? "Ajout…" : "Ajouter au panier"}

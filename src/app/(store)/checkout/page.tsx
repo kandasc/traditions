@@ -82,7 +82,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
           Paiement
@@ -110,7 +110,7 @@ export default function CheckoutPage() {
       </div>
 
       <form
-        className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900"
+        className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6 dark:border-zinc-700 dark:bg-zinc-900"
         onSubmit={async (e) => {
           e.preventDefault();
           setSubmitting(true);
@@ -193,7 +193,7 @@ export default function CheckoutPage() {
             <input
               required
               type="email"
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:text-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
             Nom sur la commande
           </span>
           <input
-            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -227,7 +227,7 @@ export default function CheckoutPage() {
             type="tel"
             autoComplete="tel"
             placeholder="+225 …"
-            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:text-sm"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
@@ -240,7 +240,7 @@ export default function CheckoutPage() {
           <textarea
             required
             rows={3}
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-base text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:text-sm"
             placeholder="Rue, quartier, repères…"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
               required
               value={deliveryZoneId}
               onChange={(e) => setDeliveryZoneId(e.target.value)}
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 sm:text-sm"
             >
               <option value="">Choisir…</option>
               {zones.map((z) => (
@@ -280,7 +280,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={submitting || zones.length === 0}
-          className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-950 px-8 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-8 text-base font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:w-auto sm:text-sm"
         >
           {submitting ? "Redirection…" : "Payer"}
         </button>

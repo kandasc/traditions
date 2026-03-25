@@ -26,21 +26,21 @@ export default async function ShopPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
           Shop
         </h1>
-        <p className="max-w-prose text-sm leading-6 text-zinc-600">
+        <p className="max-w-prose text-sm leading-6 text-zinc-600 dark:text-zinc-400">
           Découvrez nos pièces. Filtrage, collections et stock seront gérés depuis
           l’admin.
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
         {products.map((p) => (
           <Link
             key={p.id}
             href={`/shop/${p.slug}`}
-            className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm"
+            className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
           >
             <div className="relative aspect-[4/5] w-full bg-zinc-50">
               {p.images[0]?.url ? (
@@ -55,9 +55,11 @@ export default async function ShopPage() {
                 />
               ) : null}
             </div>
-            <div className="flex flex-col gap-1 p-4">
-              <p className="text-sm font-semibold text-zinc-950">{p.name}</p>
-              <p className="text-xs text-zinc-600">
+            <div className="flex flex-col gap-1 p-3 sm:p-4">
+              <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 sm:text-sm">
+                {p.name}
+              </p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {p.priceXof ? `${p.priceXof.toLocaleString("fr-FR")} FCFA` : "—"}
               </p>
             </div>

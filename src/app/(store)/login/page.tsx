@@ -20,9 +20,11 @@ function LoginForm() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-        <h1 className="text-xl font-semibold text-zinc-950">Connexion</h1>
-        <p className="mt-2 text-sm text-zinc-600">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-950 sm:p-8">
+        <h1 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">
+          Connexion
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Connectez-vous pour suivre vos commandes.
         </p>
 
@@ -51,7 +53,7 @@ function LoginForm() {
               Email
             </span>
             <input
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:text-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
@@ -64,7 +66,7 @@ function LoginForm() {
               Mot de passe
             </span>
             <input
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+              className="min-h-12 rounded-xl border border-zinc-200 bg-white px-3 text-base text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 sm:text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
@@ -73,10 +75,12 @@ function LoginForm() {
             />
           </label>
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          ) : null}
 
           <button
-            className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-6 text-base font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:text-sm"
             type="submit"
             disabled={loading}
           >
@@ -84,13 +88,16 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="mt-6 text-sm text-zinc-600">
+        <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
           Pas encore de compte ?{" "}
-          <Link className="font-semibold text-zinc-950 underline" href="/register">
+          <Link
+            className="font-semibold text-zinc-950 underline dark:text-zinc-50"
+            href="/register"
+          >
             Créer un profil
           </Link>
         </p>
-        <p className="mt-3 text-sm text-zinc-500">
+        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-500">
           <Link className="underline" href="/">
             ← Retour au site
           </Link>

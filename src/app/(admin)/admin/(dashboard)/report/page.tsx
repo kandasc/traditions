@@ -213,7 +213,8 @@ export default async function AdminReportPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-600">
           Historique détaillé (derniers {rangeDays} jours)
         </h2>
-        <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-200">
+          <div className="min-w-[640px] overflow-hidden">
           <div className="grid grid-cols-12 gap-3 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
             <div className="col-span-2">Commande</div>
             <div className="col-span-3">Client</div>
@@ -259,6 +260,7 @@ export default async function AdminReportPage() {
                 </div>
               ))
             )}
+          </div>
           </div>
         </div>
       </section>

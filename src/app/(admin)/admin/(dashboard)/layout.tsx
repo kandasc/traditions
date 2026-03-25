@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { AdminSignOutButton } from "./sign-out-button";
+import { AdminHeaderNav } from "@/components/AdminHeaderNav";
 
 export default async function AdminDashboardLayout({
   children,
@@ -18,48 +18,22 @@ export default async function AdminDashboardLayout({
 
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <header className="border-b border-zinc-800 bg-zinc-950">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/admin" className="flex items-center gap-3">
+      <header className="border-b border-zinc-800 bg-zinc-950 pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-4">
+          <Link href="/admin" className="flex min-w-0 items-center gap-2 sm:gap-3">
             <img
               src="/sayele-logo-white.svg"
               alt="SAYELE"
-              className="h-6 w-auto"
+              className="h-6 w-auto shrink-0"
             />
-            <div className="text-sm font-semibold text-zinc-50">
+            <div className="truncate text-sm font-semibold text-zinc-50">
               Admin
             </div>
           </Link>
-          <nav className="flex flex-wrap items-center gap-5 text-sm text-zinc-300">
-            <Link className="hover:text-zinc-50" href="/">
-              Voir le site
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/products">
-              Produits
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/orders">
-              Commandes
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/report">
-              Report
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/delivery-zones">
-              Livraison
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/users">
-              Utilisateurs
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/pages">
-              Pages
-            </Link>
-            <Link className="hover:text-zinc-50" href="/admin/hero">
-              Hero
-            </Link>
-            <AdminSignOutButton />
-          </nav>
+          <AdminHeaderNav />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-10 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {children}
       </main>
       <footer className="border-t border-zinc-200 bg-white">
