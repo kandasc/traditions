@@ -37,6 +37,8 @@ SAYELEPAY_MERCHANT_ID="Traditions"
 
 # Public key for SayeleGate SDK (https://www.sayelepay.com/sdk) — required in the browser
 NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY="pk_live_..."
+# Optional — hosted checkout origin (no path); default https://api.sayelepay.com
+# NEXT_PUBLIC_SAYELEPAY_GATE_ORIGIN="https://api.sayelepay.com"
 ```
 
 ### 3) Build + run

@@ -35,6 +35,7 @@ Payments (SayelePay — [API docs](https://www.sayelepay.com/api-docs), [SDK / c
 - `SAYELEPAY_API_BASE` — e.g. `https://api.sayelepay.com/api/v1` ([base URL in docs](https://www.sayelepay.com/api-docs))
 - `SAYELEPAY_API_KEY` — secret key `sk_test_…` / `sk_live_…` ([Authentication](https://www.sayelepay.com/api-docs))
 - `NEXT_PUBLIC_SAYELEPAY_PUBLISHABLE_KEY` — **required for browser checkout**: `pk_test_…` / `pk_live_…` (used by `SayeleGateSDK` + `client_secret` from `POST /payment-intents`)
+- `NEXT_PUBLIC_SAYELEPAY_GATE_ORIGIN` (optional) — SayelePay **hosted checkout** host, **origin only** (no path). Default `https://api.sayelepay.com` — the SDK redirects to `{origin}/checkout?...`. Without this, SayelePay’s JS wrongly used your own domain and clients never left your site.
 - `SAYELEPAY_SECRET` — webhook signature (if configured)
 - `SAYELEPAY_MERCHANT_ID` (optional)
 - `SAYELEPAY_INIT_PATH` (optional) — default `/payment-intents` relative to `SAYELEPAY_API_BASE`

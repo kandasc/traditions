@@ -1,11 +1,26 @@
 /**
  * Browser-side SayeleGate SDK (see https://www.sayelepay.com/sdk).
  * Loaded dynamically so the storefront bundle does not depend on remote script at build time.
+ *
+ * Important: SayeleGateSDK defaults `baseUrl` to `window.location.origin`, so `redirectToCheckout`
+ * would send users to YOUR site at `/checkout` instead of SayelePay. Always pass SayelePay’s
+ * gateway origin via the second constructor argument (see SDK source on sdk.sayelepay.com).
  */
 
 const SDK_SRC = "https://sdk.sayelepay.com/sayelegate-sdk.js";
 
-export type SayeleGateCtor = new (publishableKey: string) => {
+/** Origin only, no path — SDK appends `/checkout?...`. */
+export function sayelePayGateOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SAYELEPAY_GATE_ORIGIN?.trim() ||
+    "https://api.sayelepay.com";
+  return raw.replace(/\/$/, "");
+}
+
+export type SayeleGateCtor = new (
+  publishableKey: string,
+  options?: { baseUrl?: string },
+) => {
   redirectToCheckout: (opts: {
     clientSecret: string;
     successUrl: string;
@@ -49,7 +64,9 @@ export async function redirectToSayelePayCheckout(opts: {
   cancelUrl: string;
 }) {
   const SayeleGateSDK = await loadSayeleGateSdk();
-  const gate = new SayeleGateSDK(opts.publishableKey);
+  const gate = new SayeleGateSDK(opts.publishableKey, {
+    baseUrl: sayelePayGateOrigin(),
+  });
   gate.redirectToCheckout({
     clientSecret: opts.clientSecret,
     successUrl: opts.successUrl,

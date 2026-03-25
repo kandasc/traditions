@@ -140,12 +140,24 @@ function buildHostedCheckoutFromTemplate(
 export function extractClientSecret(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
-  const s = o.client_secret;
-  if (typeof s === "string" && s.trim()) return s.trim();
+  const pick = (obj: Record<string, unknown>): string | null => {
+    for (const key of ["client_secret", "clientSecret"] as const) {
+      const v = obj[key];
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return null;
+  };
+  const top = pick(o);
+  if (top) return top;
   const d = o.data;
   if (d && typeof d === "object") {
-    const cs = (d as Record<string, unknown>).client_secret;
-    if (typeof cs === "string" && cs.trim()) return cs.trim();
+    const inner = pick(d as Record<string, unknown>);
+    if (inner) return inner;
+  }
+  const pi = o.payment_intent;
+  if (pi && typeof pi === "object") {
+    const inner = pick(pi as Record<string, unknown>);
+    if (inner) return inner;
   }
   return null;
 }
