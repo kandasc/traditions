@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/db";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 
+/**
+ * Credentials login requires JWT sessions (database sessions + PrismaAdapter
+ * break or flake in production with the credentials provider).
+ */
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "database" },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/admin/login" },
   providers: [
     CredentialsProvider({
@@ -31,8 +33,12 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) (session.user as any).id = user.id;
+    async jwt({ token, user }) {
+      if (user?.id) token.sub = user.id as string;
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) (session.user as any).id = token.sub;
       return session;
     },
   },

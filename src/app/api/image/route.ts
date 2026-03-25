@@ -3,6 +3,8 @@ import path from "path";
 import sharp from "sharp";
 
 export const runtime = "nodejs";
+/** Large AVIF/WebP encodes can OOM on serverless; keep outputs light on Vercel. */
+export const maxDuration = 60;
 
 const ALLOWED_HOSTNAMES = new Set([
   "admin.traditions-mode.com",
@@ -25,6 +27,7 @@ function getCacheDir() {
 }
 
 function pickFormat(acceptHeader: string | null) {
+  if (process.env.VERCEL) return "jpeg" as const;
   const a = (acceptHeader ?? "").toLowerCase();
   if (a.includes("image/avif")) return "avif" as const;
   if (a.includes("image/webp")) return "webp" as const;
@@ -83,52 +86,75 @@ export async function GET(req: Request) {
     }
   }
 
-  const upstream = await fetch(target, {
-    headers: { "user-agent": "traditions-image-proxy/1.0" },
-  });
-  if (!upstream.ok) {
-    return Response.json(
-      { error: "Upstream fetch failed", status: upstream.status },
-      { status: 502 },
-    );
-  }
+  try {
+    const upstream = await fetch(target, {
+      headers: { "user-agent": "traditions-image-proxy/1.0" },
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (!upstream.ok) {
+      return Response.json(
+        { error: "Upstream fetch failed", status: upstream.status },
+        { status: 502 },
+      );
+    }
 
-  const input = Buffer.from(await upstream.arrayBuffer());
-  const img = sharp(input, { failOn: "none" }).rotate().resize({
-    width,
-    withoutEnlargement: true,
-  });
+    const input = Buffer.from(await upstream.arrayBuffer());
+    if (input.length === 0) {
+      return Response.json({ error: "Empty upstream body" }, { status: 502 });
+    }
 
-  const out =
-    format === "avif"
-      ? await img.avif({ quality }).toBuffer()
-      : format === "webp"
-        ? await img.webp({ quality }).toBuffer()
-        : await img.jpeg({ quality, mozjpeg: true }).toBuffer();
-
-  // Best-effort disk caching when available (non-Vercel / persistent volume)
-  if (cacheDir && filePath) {
-    const { mkdir, readFile, writeFile } = await import("fs/promises");
+    let out: Buffer;
     try {
-      const cached = await readFile(filePath);
-      return new Response(cached as unknown as BodyInit, {
+      const img = sharp(input, { failOn: "none" }).rotate().resize({
+        width,
+        withoutEnlargement: true,
+      });
+
+      out =
+        format === "avif"
+          ? await img.avif({ quality }).toBuffer()
+          : format === "webp"
+            ? await img.webp({ quality }).toBuffer()
+            : await img.jpeg({ quality, mozjpeg: true }).toBuffer();
+    } catch {
+      // Passthrough original bytes if sharp fails (corrupt EXIF, OOM edge cases).
+      const ct =
+        upstream.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+      return new Response(new Uint8Array(input), {
         headers: {
-          "content-type": `image/${format === "jpeg" ? "jpeg" : format}`,
-          "cache-control": "public, max-age=31536000, immutable",
+          "content-type": ct,
+          "cache-control": "public, max-age=86400",
         },
       });
-    } catch {
-      // ignore
     }
-    await mkdir(cacheDir, { recursive: true });
-    await writeFile(filePath, out);
-  }
 
-  return new Response(out as unknown as BodyInit, {
-    headers: {
-      "content-type": `image/${format === "jpeg" ? "jpeg" : format}`,
-      "cache-control": "public, max-age=31536000, immutable",
-    },
-  });
+    // Best-effort disk caching when available (non-Vercel / persistent volume)
+    if (cacheDir && filePath) {
+      const { mkdir, readFile, writeFile } = await import("fs/promises");
+      try {
+        const cached = await readFile(filePath);
+        return new Response(cached as unknown as BodyInit, {
+          headers: {
+            "content-type": `image/${format === "jpeg" ? "jpeg" : format}`,
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        });
+      } catch {
+        // ignore
+      }
+      await mkdir(cacheDir, { recursive: true });
+      await writeFile(filePath, out);
+    }
+
+    return new Response(new Uint8Array(out), {
+      headers: {
+        "content-type": `image/${format === "jpeg" ? "jpeg" : format}`,
+        "cache-control": "public, max-age=31536000, immutable",
+      },
+    });
+  } catch (e) {
+    console.error("[api/image]", e);
+    return Response.json({ error: "Image processing failed" }, { status: 500 });
+  }
 }
 
