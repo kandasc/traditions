@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { isPaymentCanceledSearchParams } from "@/lib/checkout-payment-result";
 
 const statusFr: Record<string, string> = {
   PENDING: "En attente de confirmation du paiement",
@@ -11,9 +12,18 @@ const statusFr: Record<string, string> = {
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { orderId } = await searchParams;
+  const sp = await searchParams;
+  const orderId =
+    typeof sp.orderId === "string"
+      ? sp.orderId
+      : Array.isArray(sp.orderId)
+        ? sp.orderId[0]
+        : undefined;
+
+  const canceled = isPaymentCanceledSearchParams(sp);
+
   const order = orderId
     ? await prisma.order.findUnique({
         where: { id: orderId },
@@ -25,6 +35,37 @@ export default async function CheckoutSuccessPage({
     order && statusFr[order.status]
       ? statusFr[order.status]
       : order?.status ?? "";
+
+  if (canceled) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 rounded-3xl border border-zinc-200 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-900">
+        <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+          Paiement non finalisé
+        </h1>
+        <p className="text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+          Le retour depuis SayelePay indique une annulation ou une interruption
+          du paiement. Aucun débit n’est garanti tant que le statut n’est pas
+          « payé ».
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {orderId ? (
+            <Link
+              href={`/checkout/payment-canceled?orderId=${encodeURIComponent(orderId)}`}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+            >
+              Reprendre ou voir la commande
+            </Link>
+          ) : null}
+          <Link
+            href="/shop"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-sm font-semibold text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Retour au shop
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4 rounded-3xl border border-zinc-200 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-900">

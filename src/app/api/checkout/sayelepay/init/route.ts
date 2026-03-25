@@ -73,7 +73,6 @@ export async function POST(req: Request) {
     const amountXof = subtotalXof + deliveryFeeXof;
     const reference = `TRD-${nanoid(10)}`;
     const returnUrl = `${origin}/checkout/success?orderId=`;
-    const cancelUrl = `${origin}/cart`;
     const webhookUrl = `${origin}/api/webhooks/sayelepay`;
     const descNames = cartCheckout.lines.map((l) => l.name).join(", ");
 
@@ -102,6 +101,8 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    const cancelUrl = `${origin}/checkout/payment-canceled?orderId=${encodeURIComponent(order.id)}`;
 
     const init = await sayelepayInitSafe({
       amountXof,
@@ -195,7 +196,7 @@ export async function POST(req: Request) {
   });
 
   const returnUrl = `${origin}/checkout/success?orderId=${order.id}`;
-  const cancelUrl = `${origin}/cart`;
+  const cancelUrl = `${origin}/checkout/payment-canceled?orderId=${encodeURIComponent(order.id)}`;
   const webhookUrl = `${origin}/api/webhooks/sayelepay`;
 
   const init = await sayelepayInitSafe({

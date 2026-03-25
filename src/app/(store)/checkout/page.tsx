@@ -172,7 +172,7 @@ export default function CheckoutPage() {
                 publishableKey: pk,
                 clientSecret: secret,
                 successUrl: `${window.location.origin}/checkout/success?orderId=${encodeURIComponent(orderId)}`,
-                cancelUrl: `${window.location.origin}/cart`,
+                cancelUrl: `${window.location.origin}/checkout/payment-canceled?orderId=${encodeURIComponent(orderId)}`,
               });
               return;
             }

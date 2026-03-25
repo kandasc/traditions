@@ -53,7 +53,7 @@ export function ResumeSayelePayButton({
       const origin = window.location.origin;
       const cancel =
         cancelPath ??
-        `/compte/commandes/${encodeURIComponent(orderId)}`;
+        `/checkout/payment-canceled?orderId=${encodeURIComponent(orderId)}`;
       const { redirectToSayelePayCheckout } = await import(
         "@/lib/sayelepay-sdk-client"
       );
