@@ -3,8 +3,7 @@ import { prisma } from "@/lib/db";
 import { HeroPanelSlider } from "@/components/HeroPanelSlider";
 import { SmartImage } from "@/components/SmartImage";
 
-const HOMEPAGE_HERO_FALLBACK_IMAGE =
-  "https://traditions-mode.com/public/images/accueil1.jpg";
+const HOMEPAGE_HERO_FALLBACK_IMAGE = "/hero-background.png";
 const HERO_BG_KEY = "hero.backgroundImageUrl";
 
 export default async function HomePage() {

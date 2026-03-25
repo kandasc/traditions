@@ -77,7 +77,8 @@ export default async function AdminHeroPage() {
           Fond du hero (URL)
         </h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Laissez vide pour utiliser l’image par défaut Traditions.
+          Laissez vide pour utiliser le fond local <code className="text-xs">/hero-background.png</code>{" "}
+          (sans texte). Effacez une ancienne URL si le site affiche encore une image avec écritures.
         </p>
         <form action={saveBackground} className="mt-4 flex flex-col gap-3">
           <input
