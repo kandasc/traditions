@@ -42,8 +42,13 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-wide text-zinc-950 dark:text-zinc-50"
+          className="flex items-center gap-2 text-lg font-semibold tracking-wide text-zinc-950 dark:text-zinc-50"
         >
+          <img
+            src="/sayele-logo-white.svg"
+            alt="SAYELE"
+            className="h-5 w-auto filter invert dark:invert-0"
+          />
           Traditions
         </Link>
         <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-zinc-700 sm:gap-6 dark:text-zinc-300">

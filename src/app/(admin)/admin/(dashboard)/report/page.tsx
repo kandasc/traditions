@@ -14,7 +14,8 @@ function fmtXof(n: number) {
 
 export default async function AdminReportPage() {
   const rangeDays = 30;
-  const since = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000);
+  const since = new Date();
+  since.setDate(since.getDate() - rangeDays);
 
   const [
     totalOrders,
