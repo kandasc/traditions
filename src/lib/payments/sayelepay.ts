@@ -90,6 +90,55 @@ export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
   return null;
 }
 
+/** Stripe-style PaymentIntent when payment requires redirect. */
+function extractStripeNextActionUrl(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const na = o.next_action;
+  if (!na || typeof na !== "object") return null;
+  const r = (na as Record<string, unknown>).redirect_to_url;
+  if (!r || typeof r !== "object") return null;
+  const u = (r as Record<string, unknown>).url;
+  if (typeof u === "string" && isHttpUrl(u)) return u.trim();
+  return null;
+}
+
+/**
+ * When the API returns only a PaymentIntent (id + client_secret) and no URL,
+ * build the customer URL from SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE.
+ * Placeholders: {id}, {payment_intent}, {client_secret} (URL-encoded),
+ * {id_raw}, {client_secret_raw} (not encoded — use with care).
+ */
+function buildHostedCheckoutFromTemplate(
+  raw: unknown,
+  orderReference?: string,
+): string | null {
+  const tpl = process.env.SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE?.trim();
+  if (!tpl || !raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = typeof o.id === "string" ? o.id : "";
+  const clientSecret = typeof o.client_secret === "string" ? o.client_secret : "";
+  const isPaymentIntent =
+    o.object === "payment_intent" ||
+    /^pi_/i.test(id) ||
+    (Boolean(clientSecret) && Boolean(id));
+
+  if (!isPaymentIntent || !id) return null;
+
+  const ref = orderReference ?? "";
+  const out = tpl
+    .replace(/\{reference_raw\}/g, ref)
+    .replace(/\{reference\}/g, encodeURIComponent(ref))
+    .replace(/\{id_raw\}/g, id)
+    .replace(/\{payment_intent_raw\}/g, id)
+    .replace(/\{client_secret_raw\}/g, clientSecret)
+    .replace(/\{id\}/g, encodeURIComponent(id))
+    .replace(/\{payment_intent\}/g, encodeURIComponent(id))
+    .replace(/\{client_secret\}/g, encodeURIComponent(clientSecret));
+
+  return isHttpUrl(out) ? out : null;
+}
+
 function getNested(
   obj: Record<string, unknown>,
   path: string,
@@ -161,13 +210,17 @@ export async function sayelepayInit(
     throw new Error(`SayelePay init failed: ${res.status} ${rawText.slice(0, 500)}`);
   }
 
-  const checkoutUrl = extractCheckoutUrlFromResponse(raw);
+  const checkoutUrl =
+    extractCheckoutUrlFromResponse(raw) ??
+    extractStripeNextActionUrl(raw) ??
+    buildHostedCheckoutFromTemplate(raw, req.reference);
 
   if (!checkoutUrl) {
     const hint = summarizeJsonKeys(raw);
     throw new Error(
-      `SayelePay: aucune URL de paiement dans la réponse (aperçu ${hint}). ` +
-        `Définissez SAYELEPAY_RESPONSE_URL_KEY=chemin.vers.le.champ si besoin.`,
+      `SayelePay: la réponse est un PaymentIntent sans URL publique (aperçu ${hint}). ` +
+        `Ajoutez SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE avec les placeholders {id} et optionnellement {client_secret} ` +
+        `(URL indiquée par SayelePay pour ouvrir la page de paiement), ou utilisez un endpoint qui renvoie déjà une URL.`,
     );
   }
 
@@ -175,6 +228,8 @@ export async function sayelepayInit(
     raw && typeof raw === "object" && !Array.isArray(raw)
       ? (raw as Record<string, unknown>)
       : undefined;
+
+  const piId = typeof obj?.id === "string" ? obj.id : undefined;
 
   const externalReference =
     (typeof obj?.reference === "string" && obj.reference) ||
@@ -186,7 +241,8 @@ export async function sayelepayInit(
     (obj?.data &&
       typeof obj.data === "object" &&
       typeof (obj.data as Record<string, unknown>).transactionId === "string" &&
-      (obj.data as Record<string, unknown>).transactionId);
+      (obj.data as Record<string, unknown>).transactionId) ||
+    piId;
 
   return {
     checkoutUrl,

@@ -38,6 +38,7 @@ Payments:
 - `SAYELEPAY_MERCHANT_ID`
 - `SAYELEPAY_INIT_PATH` (full URL or path; e.g. `https://api…/api/v1/payment-intents`)
 - `SAYELEPAY_RESPONSE_URL_KEY` (optional) — dotted path to the redirect URL if auto-detection fails, e.g. `data.checkout_link`
+- `SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE` (often **required**) — if the API returns a Stripe-like **PaymentIntent** (`id`, `client_secret`) without a URL, set the **public** payment page URL from SayelePay. Placeholders: `{id}`, `{client_secret}`, `{reference}` (URL-encoded); `{id_raw}`, `{client_secret_raw}`, `{reference_raw}` without encoding.
 
 AI (optional):
 - `OPENAI_API_KEY`

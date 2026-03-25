@@ -33,6 +33,10 @@ SAYELEPAY_API_KEY="..."
 SAYELEPAY_SECRET="..."
 SAYELEPAY_MERCHANT_ID="Traditions"
 SAYELEPAY_INIT_PATH="https://api.sayelepay.com/api/v1/payment-intents"
+
+# If the init response is a PaymentIntent without checkoutUrl, SayelePay usually
+# gives a separate hosted URL pattern — ask them, then e.g.:
+# SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE="https://…?payment_intent={id}&client_secret={client_secret}"
 ```
 
 ### 3) Build + run
