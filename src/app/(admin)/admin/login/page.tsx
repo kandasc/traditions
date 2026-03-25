@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { getSession, signIn, signOut } from "next-auth/react";
 
 export default function AdminLoginPage() {
@@ -10,7 +11,22 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
+      <header className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-4">
+          <Link href="/admin" className="flex items-center gap-3">
+            <img
+              src="/sayele-logo-white.svg"
+              alt="SAYELE"
+              className="h-6 w-auto hidden sm:block"
+            />
+            <div className="text-sm font-semibold text-zinc-950">
+              Admin <span className="text-zinc-500">— Traditions</span>
+            </div>
+          </Link>
+          <div className="text-xs text-zinc-500">Built by SAYELE</div>
+        </div>
+      </header>
       <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
         <div className="rounded-2xl border border-zinc-200 bg-white p-8">
           <h1 className="text-xl font-semibold text-zinc-950">Connexion admin</h1>

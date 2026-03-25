@@ -17,39 +17,58 @@ export default async function AdminDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white">
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
+      <header className="border-b border-zinc-800 bg-zinc-950">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/admin" className="text-sm font-semibold text-zinc-950">
-            Admin — Traditions
+          <Link href="/admin" className="flex items-center gap-3">
+            <img
+              src="/sayele-logo-white.svg"
+              alt="SAYELE"
+              className="h-6 w-auto"
+            />
+            <div className="text-sm font-semibold text-zinc-50">
+              Admin <span className="text-zinc-400">— Traditions</span>
+            </div>
           </Link>
-          <nav className="flex flex-wrap items-center gap-5 text-sm text-zinc-700">
-            <Link className="hover:text-zinc-950" href="/">
+          <nav className="flex flex-wrap items-center gap-5 text-sm text-zinc-300">
+            <Link className="hover:text-zinc-50" href="/">
               Voir le site
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/products">
+            <Link className="hover:text-zinc-50" href="/admin/products">
               Produits
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/orders">
+            <Link className="hover:text-zinc-50" href="/admin/orders">
               Commandes
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/delivery-zones">
+            <Link className="hover:text-zinc-50" href="/admin/report">
+              Report
+            </Link>
+            <Link className="hover:text-zinc-50" href="/admin/delivery-zones">
               Livraison
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/users">
+            <Link className="hover:text-zinc-50" href="/admin/users">
               Utilisateurs
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/pages">
+            <Link className="hover:text-zinc-50" href="/admin/pages">
               Pages
             </Link>
-            <Link className="hover:text-zinc-950" href="/admin/hero">
+            <Link className="hover:text-zinc-50" href="/admin/hero">
               Hero
             </Link>
             <AdminSignOutButton />
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-4 py-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+        {children}
+      </main>
+      <footer className="border-t border-zinc-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-center text-xs text-zinc-500">
+          <span>
+            Built by <span className="font-semibold text-zinc-700">SAYELE</span>
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
