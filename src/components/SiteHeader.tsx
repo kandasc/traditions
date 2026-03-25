@@ -54,7 +54,7 @@ export function SiteHeader() {
             alt="SAYELE"
             className="hidden h-5 w-auto dark:block"
           />
-          Traditions
+          <span className="sr-only">SAYELE</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-zinc-700 sm:gap-6 dark:text-zinc-300">
           <Link className="hover:text-zinc-950 dark:hover:text-white" href="/shop">
