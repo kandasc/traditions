@@ -8,6 +8,12 @@ import {
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { nanoid } from "nanoid";
+import {
+  normalizeCustomerAddress,
+  normalizeCustomerPhone,
+  resolveActiveDeliveryZone,
+  validateCheckoutShipping,
+} from "@/lib/checkout-shipping";
 
 export async function POST(req: Request) {
   let body: {
@@ -15,6 +21,9 @@ export async function POST(req: Request) {
     quantity?: number;
     customerEmail?: string;
     customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    deliveryZoneId?: string;
     fromCart?: boolean;
   };
   try {
@@ -31,6 +40,20 @@ export async function POST(req: Request) {
   if (session?.user?.email) customerEmail = session.user.email;
   if (session?.user?.name) customerName = session.user.name;
 
+  const customerPhone = normalizeCustomerPhone(body.customerPhone);
+  const customerAddress = normalizeCustomerAddress(body.customerAddress);
+  const shipCheck = validateCheckoutShipping(customerPhone, customerAddress);
+  if (!("ok" in shipCheck)) {
+    return Response.json({ error: shipCheck.error }, { status: 400 });
+  }
+
+  const zoneRes = await resolveActiveDeliveryZone(body.deliveryZoneId);
+  if ("error" in zoneRes) {
+    return Response.json({ error: zoneRes.error }, { status: 400 });
+  }
+  const { zone } = zoneRes;
+  const deliveryFeeXof = zone.feeXof;
+
   const origin = new URL(req.url).origin;
 
   if (body.fromCart) {
@@ -46,7 +69,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const amountXof = cartCheckout.subtotalXof;
+    const subtotalXof = cartCheckout.subtotalXof;
+    const amountXof = subtotalXof + deliveryFeeXof;
     const reference = `TRD-${nanoid(10)}`;
     const returnUrl = `${origin}/checkout/success?orderId=`;
     const webhookUrl = `${origin}/api/webhooks/sayelepay`;
@@ -56,9 +80,14 @@ export async function POST(req: Request) {
       data: {
         status: "PENDING",
         currency: "XOF",
+        subtotalXof,
+        deliveryFeeXof,
         amountXof,
         customerEmail,
         customerName,
+        customerPhone,
+        customerAddress,
+        deliveryZoneId: zone.id,
         userId: sessionUserId ?? undefined,
         items: {
           create: cartCheckout.lines.map((line) => ({
@@ -133,16 +162,22 @@ export async function POST(req: Request) {
     );
   }
 
-  const amountXof = product.priceXof * quantity;
+  const subtotalXof = product.priceXof * quantity;
+  const amountXof = subtotalXof + deliveryFeeXof;
   const reference = `TRD-${nanoid(10)}`;
 
   const order = await prisma.order.create({
     data: {
       status: "PENDING",
       currency: "XOF",
+      subtotalXof,
+      deliveryFeeXof,
       amountXof,
       customerEmail,
       customerName,
+      customerPhone,
+      customerAddress,
+      deliveryZoneId: zone.id,
       userId: sessionUserId ?? undefined,
       items: {
         create: [

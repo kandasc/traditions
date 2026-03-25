@@ -2,15 +2,17 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 
 export default async function AdminHome() {
-  const [productsCount, pagesCount, ordersCount, usersCount] = await Promise.all([
-    prisma.product.count(),
-    prisma.page.count(),
-    prisma.order.count(),
-    prisma.user.count(),
-  ]);
+  const [productsCount, pagesCount, ordersCount, usersCount, zonesCount] =
+    await Promise.all([
+      prisma.product.count(),
+      prisma.page.count(),
+      prisma.order.count(),
+      prisma.user.count(),
+      prisma.deliveryZone.count(),
+    ]);
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <div className="rounded-2xl border border-zinc-200 bg-white p-6">
         <p className="text-sm text-zinc-600">Produits</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">
@@ -41,6 +43,16 @@ export default async function AdminHome() {
           href="/admin/orders"
         >
           Voir les commandes →
+        </Link>
+      </div>
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <p className="text-sm text-zinc-600">Zones de livraison</p>
+        <p className="mt-2 text-3xl font-semibold text-zinc-950">{zonesCount}</p>
+        <Link
+          className="mt-4 inline-flex text-sm font-semibold text-zinc-950 hover:underline"
+          href="/admin/delivery-zones"
+        >
+          Frais et zones →
         </Link>
       </div>
       <div className="rounded-2xl border border-zinc-200 bg-white p-6">

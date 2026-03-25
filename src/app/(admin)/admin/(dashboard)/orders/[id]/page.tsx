@@ -32,6 +32,7 @@ export default async function AdminOrderDetailPage({
     where: { id },
     include: {
       items: true,
+      deliveryZone: true,
       payments: { orderBy: { createdAt: "desc" } },
       user: { select: { email: true, name: true, id: true } },
     },
@@ -61,6 +62,37 @@ export default async function AdminOrderDetailPage({
         )}
       </div>
 
+      {(order.customerPhone ||
+        order.customerAddress ||
+        order.deliveryZone) && (
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-600">
+            Livraison
+          </h2>
+          <ul className="mt-3 space-y-2 text-sm text-zinc-800">
+            {order.deliveryZone ? (
+              <li>
+                <span className="text-zinc-600">Zone :</span>{" "}
+                {order.deliveryZone.name} (
+                {order.deliveryFeeXof.toLocaleString("fr-FR")} FCFA)
+              </li>
+            ) : null}
+            {order.customerPhone ? (
+              <li>
+                <span className="text-zinc-600">Téléphone :</span>{" "}
+                {order.customerPhone}
+              </li>
+            ) : null}
+            {order.customerAddress ? (
+              <li>
+                <span className="text-zinc-600">Adresse :</span>{" "}
+                <span className="whitespace-pre-wrap">{order.customerAddress}</span>
+              </li>
+            ) : null}
+          </ul>
+        </section>
+      )}
+
       <section className="rounded-2xl border border-zinc-200 bg-white p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-600">
           Lignes
@@ -84,9 +116,25 @@ export default async function AdminOrderDetailPage({
             </li>
           ))}
         </ul>
-        <p className="mt-6 text-right text-lg font-semibold">
-          Total : {order.amountXof.toLocaleString("fr-FR")} FCFA
-        </p>
+        <div className="mt-6 space-y-1 text-right text-sm text-zinc-700">
+          <p>
+            Sous-total articles :{" "}
+            <span className="font-medium text-zinc-950">
+              {order.subtotalXof.toLocaleString("fr-FR")} FCFA
+            </span>
+          </p>
+          {order.deliveryFeeXof > 0 ? (
+            <p>
+              Livraison :{" "}
+              <span className="font-medium text-zinc-950">
+                {order.deliveryFeeXof.toLocaleString("fr-FR")} FCFA
+              </span>
+            </p>
+          ) : null}
+          <p className="text-lg font-semibold text-zinc-950">
+            Total : {order.amountXof.toLocaleString("fr-FR")} FCFA
+          </p>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6">

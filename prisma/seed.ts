@@ -255,6 +255,38 @@ async function main() {
     }
   }
 
+  const defaultZones = [
+    {
+      name: "Abidjan — Cocody / Riviera",
+      slug: "abidjan-cocody",
+      feeXof: 2000,
+      sortOrder: 10,
+    },
+    {
+      name: "Abidjan — autres communes",
+      slug: "abidjan-autres",
+      feeXof: 3500,
+      sortOrder: 20,
+    },
+    {
+      name: "Hors Abidjan (Côte d’Ivoire)",
+      slug: "hors-abidjan-ci",
+      feeXof: 8000,
+      sortOrder: 30,
+    },
+  ];
+  for (const z of defaultZones) {
+    await prisma.deliveryZone.upsert({
+      where: { slug: z.slug },
+      create: { ...z, isActive: true },
+      update: {
+        name: z.name,
+        feeXof: z.feeXof,
+        sortOrder: z.sortOrder,
+      },
+    });
+  }
+
   console.log(`Seeded ${products.length} products.`);
   console.log(`Admin login: ${adminEmail} / ${adminPassword}`);
 }

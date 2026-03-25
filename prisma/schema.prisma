@@ -93,13 +93,36 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model DeliveryZone {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  /// FCFA — added to cart subtotal for this zone
+  feeXof    Int
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Order {
   id         String      @id @default(cuid())
   status     OrderStatus @default(PENDING)
   currency   Currency    @default(XOF)
+  /// Cart / lines total before delivery
+  subtotalXof   Int      @default(0)
+  deliveryFeeXof Int     @default(0)
+  /// Total charged (subtotal + deliveryFeeXof)
   amountXof  Int
   customerEmail String?
   customerName  String?
+  customerPhone    String?
+  customerAddress  String?
+  deliveryZoneId   String?
+  deliveryZone     DeliveryZone? @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
   notes      String?
 
   userId    String?
@@ -112,6 +135,7 @@ model Order {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([deliveryZoneId])
 }
 
 model OrderItem {

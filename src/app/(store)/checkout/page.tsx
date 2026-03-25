@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+
+type DeliveryZoneOption = { id: string; name: string; feeXof: number };
 
 export default function CheckoutPage() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [zones, setZones] = useState<DeliveryZoneOption[]>([]);
+  const [deliveryZoneId, setDeliveryZoneId] = useState("");
   const [cartTotal, setCartTotal] = useState(0);
   const [itemCount, setItemCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,14 +26,35 @@ export default function CheckoutPage() {
   }, [session]);
 
   useEffect(() => {
-    fetch("/api/cart")
-      .then((r) => r.json())
-      .then((d) => {
-        setCartTotal(d.subtotalXof ?? 0);
-        setItemCount(d.itemCount ?? 0);
+    let cancelled = false;
+    Promise.all([
+      fetch("/api/cart").then((r) => r.json()),
+      fetch("/api/delivery-zones").then((r) => r.json()),
+    ])
+      .then(([cart, dz]) => {
+        if (cancelled) return;
+        setCartTotal(cart.subtotalXof ?? 0);
+        setItemCount(cart.itemCount ?? 0);
+        const list = (dz.zones ?? []) as DeliveryZoneOption[];
+        setZones(list);
+        if (list.length === 1) {
+          setDeliveryZoneId(list[0].id);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const deliveryFee = useMemo(() => {
+    const z = zones.find((x) => x.id === deliveryZoneId);
+    return z?.feeXof ?? 0;
+  }, [zones, deliveryZoneId]);
+
+  const orderTotal = cartTotal + deliveryFee;
 
   if (loading) {
     return (
@@ -61,11 +88,24 @@ export default function CheckoutPage() {
           Paiement
         </h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Total estimé :{" "}
-          <span className="font-semibold text-zinc-950 dark:text-zinc-50">
+          Sous-total :{" "}
+          <span className="font-medium text-zinc-950 dark:text-zinc-50">
             {cartTotal.toLocaleString("fr-FR")} FCFA
+          </span>
+          {deliveryZoneId ? (
+            <>
+              {" "}
+              · Livraison :{" "}
+              <span className="font-medium text-zinc-950 dark:text-zinc-50">
+                {deliveryFee.toLocaleString("fr-FR")} FCFA
+              </span>
+            </>
+          ) : null}
+          <br />
+          <span className="mt-1 inline-block font-semibold text-zinc-950 dark:text-zinc-50">
+            Total : {orderTotal.toLocaleString("fr-FR")} FCFA
           </span>{" "}
-          — redirection vers la page de paiement sécurisée.
+          — paiement sécurisé.
         </p>
       </div>
 
@@ -83,6 +123,9 @@ export default function CheckoutPage() {
                 fromCart: true,
                 customerEmail: email,
                 customerName: name,
+                customerPhone: phone,
+                customerAddress: address,
+                deliveryZoneId,
               }),
             });
             const text = await res.text();
@@ -175,13 +218,68 @@ export default function CheckoutPage() {
           />
         </label>
 
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Téléphone (livraison)
+          </span>
+          <input
+            required
+            type="tel"
+            autoComplete="tel"
+            placeholder="+225 …"
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </label>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Adresse complète de livraison
+          </span>
+          <textarea
+            required
+            rows={3}
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            placeholder="Rue, quartier, repères…"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </label>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Zone de livraison
+          </span>
+          {zones.length === 0 ? (
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              Aucune zone de livraison n’est configurée pour le moment. Revenez
+              plus tard ou contactez la boutique.
+            </p>
+          ) : (
+            <select
+              required
+              value={deliveryZoneId}
+              onChange={(e) => setDeliveryZoneId(e.target.value)}
+              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+            >
+              <option value="">Choisir…</option>
+              {zones.map((z) => (
+                <option key={z.id} value={z.id}>
+                  {z.name} — {z.feeXof.toLocaleString("fr-FR")} FCFA
+                </option>
+              ))}
+            </select>
+          )}
+        </label>
+
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : null}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || zones.length === 0}
           className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-950 px-8 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
         >
           {submitting ? "Redirection…" : "Payer"}

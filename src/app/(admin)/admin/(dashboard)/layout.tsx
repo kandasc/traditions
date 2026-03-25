@@ -33,6 +33,9 @@ export default async function AdminDashboardLayout({
             <Link className="hover:text-zinc-950" href="/admin/orders">
               Commandes
             </Link>
+            <Link className="hover:text-zinc-950" href="/admin/delivery-zones">
+              Livraison
+            </Link>
             <Link className="hover:text-zinc-950" href="/admin/users">
               Utilisateurs
             </Link>
