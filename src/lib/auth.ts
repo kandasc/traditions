@@ -8,6 +8,8 @@ import bcrypt from "bcryptjs";
  * break or flake in production with the credentials provider).
  */
 export const authOptions: NextAuthOptions = {
+  // Required for JWT sessions in production (omit → flaky decrypt / RSC errors).
+  secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/admin/login" },
   providers: [
@@ -34,11 +36,19 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) token.sub = user.id as string;
+      if (user) {
+        token.sub = user.id as string;
+        if (user.email) token.email = user.email;
+        if (user.name) token.name = user.name;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.sub) (session.user as any).id = token.sub;
+      if (session.user) {
+        if (token.sub) (session.user as any).id = token.sub;
+        if (token.email) session.user.email = token.email as string;
+        if (token.name) session.user.name = token.name as string;
+      }
       return session;
     },
   },

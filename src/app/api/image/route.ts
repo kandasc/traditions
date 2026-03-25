@@ -87,10 +87,17 @@ export async function GET(req: Request) {
   }
 
   try {
-    const upstream = await fetch(target, {
-      headers: { "user-agent": "traditions-image-proxy/1.0" },
-      signal: AbortSignal.timeout(25_000),
-    });
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 25_000);
+    let upstream: Response;
+    try {
+      upstream = await fetch(target, {
+        headers: { "user-agent": "traditions-image-proxy/1.0" },
+        signal: ac.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!upstream.ok) {
       return Response.json(
         { error: "Upstream fetch failed", status: upstream.status },
