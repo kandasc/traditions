@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 function MenuIcon({ open }: { open: boolean }) {
   if (open) {
@@ -90,22 +91,122 @@ export function SiteHeader() {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => {
+      if (mq.matches) setMobileOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const mobileMenu =
+    mobileOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            id="store-mobile-menu"
+            className="fixed inset-0 z-[200] lg:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/40 dark:bg-black/60"
+              aria-label="Fermer le menu"
+              onClick={() => setMobileOpen(false)}
+            />
+            <nav className="absolute right-0 top-0 flex h-full w-[min(100vw-2.5rem,22rem)] max-w-[100vw] flex-col overflow-y-auto border-l border-zinc-200 bg-white py-1 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] shadow-2xl dark:border-zinc-700 dark:bg-zinc-950">
+              <Link
+                href="/shop"
+                className={sheetLinkClass}
+                onClick={() => setMobileOpen(false)}
+              >
+                Shop
+              </Link>
+              <Link
+                href="/about"
+                className={sheetLinkClass}
+                onClick={() => setMobileOpen(false)}
+              >
+                La marque
+              </Link>
+              <Link
+                href="/atelier"
+                className={sheetLinkClass}
+                onClick={() => setMobileOpen(false)}
+              >
+                L’atelier
+              </Link>
+              <div className="border-t border-zinc-200 px-3 py-4 dark:border-zinc-800">
+                <Link
+                  href="/cart"
+                  className="flex min-h-12 items-center justify-center rounded-xl bg-zinc-950 text-base font-semibold text-white dark:bg-zinc-100 dark:text-zinc-950"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Voir le panier
+                </Link>
+              </div>
+              {status === "loading" ? null : session ? (
+                <>
+                  <Link
+                    href="/compte"
+                    className={sheetLinkClass}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Mon compte
+                  </Link>
+                  <button
+                    type="button"
+                    className={`${sheetLinkClass} w-full border-0 text-left`}
+                    onClick={() => {
+                      setMobileOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                  >
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className={sheetLinkClass}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Connexion
+                </Link>
+              )}
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className={sheetLinkClass}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </nav>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/90 backdrop-blur dark:border-zinc-700/80 dark:bg-zinc-950/90 pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-4">
+      <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:py-4">
         <Link
           href="/"
-          className="flex min-w-0 shrink-0 items-center gap-2 text-lg font-semibold tracking-wide text-zinc-950 dark:text-zinc-50"
+          className="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold tracking-wide text-zinc-950 lg:flex-initial lg:shrink-0 dark:text-zinc-50"
         >
           <img
             src="/sayele-logo-black.svg"
             alt=""
-            className="h-6 w-auto dark:hidden sm:h-7"
+            className="h-6 max-h-7 w-auto max-w-[min(11rem,48vw)] object-contain object-left dark:hidden sm:h-7 sm:max-w-[13rem]"
           />
           <img
             src="/sayele-logo-white.svg"
             alt=""
-            className="hidden h-6 w-auto dark:block sm:h-7"
+            className="hidden h-6 max-h-7 w-auto max-w-[min(11rem,48vw)] object-contain object-left dark:block sm:h-7 sm:max-w-[13rem]"
           />
           <span className="sr-only">SAYELE</span>
         </Link>
@@ -158,7 +259,7 @@ export function SiteHeader() {
           ) : null}
         </nav>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex shrink-0 items-center gap-2 lg:hidden">
           <CartBadge compact />
           <button
             type="button"
@@ -172,92 +273,8 @@ export function SiteHeader() {
           </button>
         </div>
       </div>
-
-      {mobileOpen ? (
-        <div
-          id="store-mobile-menu"
-          className="fixed inset-0 z-50 lg:hidden"
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/40 dark:bg-black/60"
-            aria-label="Fermer le menu"
-            onClick={() => setMobileOpen(false)}
-          />
-          <nav className="absolute right-0 top-0 flex h-full w-[min(100vw-2.5rem,22rem)] flex-col overflow-y-auto border-l border-zinc-200 bg-white pt-[calc(4.5rem+env(safe-area-inset-top))] shadow-2xl dark:border-zinc-700 dark:bg-zinc-950">
-            <Link
-              href="/shop"
-              className={sheetLinkClass}
-              onClick={() => setMobileOpen(false)}
-            >
-              Shop
-            </Link>
-            <Link
-              href="/about"
-              className={sheetLinkClass}
-              onClick={() => setMobileOpen(false)}
-            >
-              La marque
-            </Link>
-            <Link
-              href="/atelier"
-              className={sheetLinkClass}
-              onClick={() => setMobileOpen(false)}
-            >
-              L’atelier
-            </Link>
-            <div className="border-t border-zinc-200 px-3 py-4 dark:border-zinc-800">
-              <Link
-                href="/cart"
-                className="flex min-h-12 items-center justify-center rounded-xl bg-zinc-950 text-base font-semibold text-white dark:bg-zinc-100 dark:text-zinc-950"
-                onClick={() => setMobileOpen(false)}
-              >
-                Voir le panier
-              </Link>
-            </div>
-            {status === "loading" ? null : session ? (
-              <>
-                <Link
-                  href="/compte"
-                  className={sheetLinkClass}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Mon compte
-                </Link>
-                <button
-                  type="button"
-                  className={`${sheetLinkClass} w-full border-0 text-left`}
-                  onClick={() => {
-                    setMobileOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                >
-                  Déconnexion
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className={sheetLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                Connexion
-              </Link>
-            )}
-            {isAdmin ? (
-              <Link
-                href="/admin"
-                className={sheetLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                Admin
-              </Link>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
     </header>
+      {mobileMenu}
+    </>
   );
 }
