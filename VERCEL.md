@@ -38,7 +38,9 @@ Payments (SayelePay — [API docs](https://www.sayelepay.com/api-docs), [SDK / c
 - `NEXT_PUBLIC_SAYELEPAY_GATE_ORIGIN` (optional) — SayelePay **hosted checkout** host, **origin only** (no path). Default `https://api.sayelepay.com` — the SDK redirects to `{origin}/checkout?...`. Without this, SayelePay’s JS wrongly used your own domain and clients never left your site.
 - `SAYELEPAY_SECRET` — webhook signature (if configured)
 - `SAYELEPAY_MERCHANT_ID` (optional)
-- `SAYELEPAY_INIT_PATH` (optional) — default `/payment-intents` relative to `SAYELEPAY_API_BASE`
+- `SAYELEPAY_INIT_PATH` (optional) — default `/payment-intents` relative to `SAYELEPAY_API_BASE` (full URL e.g. `https://api.sayelepay.com/api/v1/payment-intents` also works)
+
+The app sends the [documented body](https://www.sayelepay.com/api-docs): `amount`, `currency`, `payment_method_types`, `description`, `customer_email`, `customer_name`, `return_url`, **`cancel_url`** (panier), plus `callback_url` (webhook) and optional `merchant_id`.
 - `SAYELEPAY_PAYMENT_METHOD_TYPES` (optional) — JSON array, default `["card","mobile_money"]`
 - `SAYELEPAY_RESPONSE_URL_KEY` (optional) — dotted path if the API returns a direct redirect URL
 - `SAYELEPAY_HOSTED_CHECKOUT_TEMPLATE` (optional) — only if you use a custom hosted URL instead of the SDK

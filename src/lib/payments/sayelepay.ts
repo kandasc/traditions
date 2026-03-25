@@ -10,6 +10,8 @@ export type SayelePayInitRequest = {
   amountXof: number;
   reference: string;
   returnUrl: string;
+  /** Per SayelePay docs — hosted checkout uses this when the user abandons payment */
+  cancelUrl?: string;
   webhookUrl: string;
   customerEmail?: string;
   customerName?: string;
@@ -58,6 +60,40 @@ function isHttpUrl(s: string): boolean {
   return /^https?:\/\//i.test(s.trim());
 }
 
+/** Not hosted checkout links — echo of our redirect targets from the API */
+const CHECKOUT_URL_IGNORE_KEYS = new Set([
+  "return_url",
+  "cancel_url",
+  "success_url",
+  "returnUrl",
+  "cancelUrl",
+  "successUrl",
+]);
+
+function sameUrlPath(a: string, b: string): boolean {
+  try {
+    const ua = new URL(a);
+    const ub = new URL(b);
+    return ua.origin === ub.origin && ua.pathname === ub.pathname;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * SayelePay often echoes `return_url` / `cancel_url` in the JSON. A naive scan of
+ * all string URLs treated the success URL as “checkout” and skipped SayelePay entirely.
+ */
+function stripEchoRedirectUrls(
+  url: string | null,
+  req: SayelePayInitRequest,
+): string | null {
+  if (!url) return null;
+  if (sameUrlPath(url, req.returnUrl)) return null;
+  if (req.cancelUrl && sameUrlPath(url, req.cancelUrl)) return null;
+  return url;
+}
+
 export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
   if (typeof raw === "string") {
     const t = raw.trim();
@@ -74,6 +110,7 @@ export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
   const obj = raw as Record<string, unknown>;
 
   for (const key of CHECKOUT_URL_KEYS) {
+    if (CHECKOUT_URL_IGNORE_KEYS.has(key)) continue;
     const v = obj[key];
     if (typeof v === "string" && isHttpUrl(v)) return v.trim();
   }
@@ -84,7 +121,8 @@ export function extractCheckoutUrlFromResponse(raw: unknown): string | null {
     if (found) return found;
   }
 
-  for (const v of Object.values(obj)) {
+  for (const [key, v] of Object.entries(obj)) {
+    if (CHECKOUT_URL_IGNORE_KEYS.has(key)) continue;
     if (typeof v === "string" && isHttpUrl(v)) return v.trim();
     if (v && typeof v === "object") {
       const found = extractCheckoutUrlFromResponse(v);
@@ -206,6 +244,10 @@ function buildPaymentIntentPayload(req: SayelePayInitRequest): Record<string, un
     return_url: req.returnUrl,
   };
 
+  if (req.cancelUrl) {
+    payload.cancel_url = req.cancelUrl;
+  }
+
   if (req.customerEmail) {
     payload.customer_email = req.customerEmail;
   }
@@ -267,10 +309,12 @@ export async function sayelepayInit(
 
   const clientSecret = extractClientSecret(raw);
 
-  const checkoutUrl =
+  let checkoutUrl =
     extractCheckoutUrlFromResponse(raw) ??
     extractStripeNextActionUrl(raw) ??
     buildHostedCheckoutFromTemplate(raw, req.reference);
+
+  checkoutUrl = stripEchoRedirectUrls(checkoutUrl, req);
 
   if (!checkoutUrl && !clientSecret) {
     const hint = summarizeJsonKeys(raw);
