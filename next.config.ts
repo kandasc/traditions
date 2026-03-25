@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "admin.traditions-mode.com" },
       { protocol: "https", hostname: "traditions-mode.com" },
       { protocol: "https", hostname: "www.traditions-mode.com" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
 };

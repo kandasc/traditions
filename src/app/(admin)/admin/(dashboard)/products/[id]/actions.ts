@@ -39,6 +39,62 @@ function parseVariantLines(raw: string) {
   return out;
 }
 
+function normalizeHex(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  const s = raw.trim();
+  if (!s) return null;
+  if (/^#[0-9A-Fa-f]{6}$/.test(s)) return s;
+  if (/^[0-9A-Fa-f]{6}$/.test(s)) return `#${s}`;
+  return null;
+}
+
+function parseImagesJson(raw: string): { url: string; alt: string | null }[] {
+  try {
+    const data = JSON.parse(raw) as unknown;
+    if (!Array.isArray(data)) return [];
+    const out: { url: string; alt: string | null }[] = [];
+    for (const item of data) {
+      if (!item || typeof item !== "object") continue;
+      const rec = item as Record<string, unknown>;
+      const url = String(rec.url ?? "").trim();
+      if (!url) continue;
+      const altRaw = rec.alt;
+      const alt =
+        typeof altRaw === "string" && altRaw.trim() ? altRaw.trim() : null;
+      out.push({ url, alt });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function parseVariantsJson(raw: string) {
+  try {
+    const data = JSON.parse(raw) as unknown;
+    if (!Array.isArray(data)) return [];
+    const out: {
+      sizeLabel: string | null;
+      colorHex: string | null;
+      imageUrl: string | null;
+    }[] = [];
+    for (const item of data) {
+      if (!item || typeof item !== "object") continue;
+      const rec = item as Record<string, unknown>;
+      const sizeLabel = String(rec.sizeLabel ?? "").trim() || null;
+      const colorHex = normalizeHex(
+        typeof rec.colorHex === "string" ? rec.colorHex : null,
+      );
+      const imageUrl = String(rec.imageUrl ?? "").trim() || null;
+      if (!sizeLabel && !colorHex && !imageUrl) continue;
+      out.push({ sizeLabel, colorHex, imageUrl });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export async function updateProduct(id: string, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const slugRaw = String(formData.get("slug") ?? "").trim();
@@ -47,6 +103,8 @@ export async function updateProduct(id: string, formData: FormData) {
   const priceXofRaw = String(formData.get("priceXof") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const details = String(formData.get("details") ?? "").trim();
+  const imagesJson = String(formData.get("imagesJson") ?? "").trim();
+  const variantsJson = String(formData.get("variantsJson") ?? "").trim();
   const imageBlock = String(formData.get("imageUrls") ?? "");
   const variantBlock = String(formData.get("variants") ?? "");
 
@@ -65,8 +123,12 @@ export async function updateProduct(id: string, formData: FormData) {
   }
 
   const priceXof = priceXofRaw ? Number(priceXofRaw) : null;
-  const images = parseImageLines(imageBlock);
-  const variantRows = parseVariantLines(variantBlock);
+  const images = imagesJson
+    ? parseImagesJson(imagesJson)
+    : parseImageLines(imageBlock);
+  const variantRows = variantsJson
+    ? parseVariantsJson(variantsJson)
+    : parseVariantLines(variantBlock);
 
   await prisma.$transaction([
     prisma.productImage.deleteMany({ where: { productId: id } }),

@@ -54,7 +54,10 @@ export async function GET(req: Request) {
   if (!["http:", "https:"].includes(target.protocol)) {
     return Response.json({ error: "Invalid protocol" }, { status: 400 });
   }
-  if (!ALLOWED_HOSTNAMES.has(target.hostname)) {
+  const allowedHost =
+    ALLOWED_HOSTNAMES.has(target.hostname) ||
+    target.hostname.endsWith(".public.blob.vercel-storage.com");
+  if (!allowedHost) {
     return Response.json({ error: "Hostname not allowed" }, { status: 403 });
   }
 

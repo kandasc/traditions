@@ -42,6 +42,9 @@ AI (optional):
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 
+Admin uploads (product images from disk):
+- `BLOB_READ_WRITE_TOKEN` — Vercel → Storage → **Blob**; attach the store to the project so this token is set. Without it, the editor still accepts **image URLs** (paste only).
+
 ### 5) Deploy
 This repo includes a `vercel-build` script that runs migrations **before** `next build`:
 
