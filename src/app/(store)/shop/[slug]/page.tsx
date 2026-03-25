@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { AddToCartSection } from "@/components/AddToCartSection";
+import { ProductImageMagnifier } from "@/components/ProductImageMagnifier";
 import { SmartImage } from "@/components/SmartImage";
 
 export default async function ProductPage({
@@ -39,20 +40,18 @@ export default async function ProductPage({
   return (
     <div className="grid gap-10 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-          {product.images[0]?.url ? (
-            <SmartImage
-              src={product.images[0].url}
-              alt={product.images[0].alt ?? product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-              proxyWidth={1400}
-              proxyQuality={74}
-            />
-          ) : null}
-        </div>
+        {product.images[0]?.url ? (
+          <ProductImageMagnifier
+            src={product.images[0].url}
+            alt={product.images[0].alt ?? product.name}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+            proxyWidth={2000}
+            proxyQuality={78}
+          />
+        ) : (
+          <div className="aspect-[4/5] w-full rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900" />
+        )}
         <div className="grid grid-cols-4 gap-3">
           {product.images.slice(0, 8).map((img) => (
             <div
