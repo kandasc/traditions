@@ -7,6 +7,32 @@ function pickSingle(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
+function clampInt(n: number, min: number, max: number) {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function parseBudget(raw: string | null): number | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(/\s/g, "").replace(/[^\d]/g, "");
+  if (!cleaned) return null;
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) return null;
+  return clampInt(n, 0, 1_000_000_000);
+}
+
+function buildShopHref(params: Record<string, string | null | undefined>) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null) continue;
+    const t = String(v).trim();
+    if (!t) continue;
+    qs.set(k, t);
+  }
+  const s = qs.toString();
+  return s ? `/shop?${s}` : "/shop";
+}
+
 export default async function ShopPage({
   searchParams,
 }: {
@@ -14,6 +40,45 @@ export default async function ShopPage({
 }) {
   const sp = await searchParams;
   const categorySlug = (pickSingle(sp.category) ?? "").trim() || null;
+  const q = (pickSingle(sp.q) ?? "").trim() || null;
+  const min = parseBudget((pickSingle(sp.min) ?? "").trim() || null);
+  const max = parseBudget((pickSingle(sp.max) ?? "").trim() || null);
+  const minXof = min != null && max != null ? Math.min(min, max) : min;
+  const maxXof = min != null && max != null ? Math.max(min, max) : max;
+
+  const productWhere = {
+    isActive: true,
+    ...(categorySlug ? { categories: { some: { slug: categorySlug } } } : {}),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { description: { contains: q, mode: "insensitive" as const } },
+            { details: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(minXof != null || maxXof != null
+      ? {
+          priceXof: {
+            ...(minXof != null ? { gte: minXof } : {}),
+            ...(maxXof != null ? { lte: maxXof } : {}),
+          },
+        }
+      : {}),
+    OR: [
+      {
+        variants: {
+          some: {
+            isActive: true,
+            OR: [{ stock: null }, { stock: { gt: 0 } }],
+          },
+        },
+      },
+      // Products without variants stay visible as long as they are active.
+      { variants: { none: { isActive: true } } },
+    ],
+  };
 
   const [categories, products] = await Promise.all([
     prisma.category.findMany({
@@ -21,24 +86,7 @@ export default async function ShopPage({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.product.findMany({
-      where: {
-        isActive: true,
-        ...(categorySlug
-          ? { categories: { some: { slug: categorySlug } } }
-          : {}),
-        OR: [
-          {
-            variants: {
-              some: {
-                isActive: true,
-                OR: [{ stock: null }, { stock: { gt: 0 } }],
-              },
-            },
-          },
-          // Products without variants stay visible as long as they are active.
-          { variants: { none: { isActive: true } } },
-        ],
-      },
+      where: productWhere,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
     }),
@@ -62,10 +110,67 @@ export default async function ShopPage({
         </p>
       </div>
 
+      <form
+        className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-950 sm:grid-cols-12 sm:items-end"
+        action="/shop"
+        method="get"
+      >
+        <input type="hidden" name="category" value={categorySlug ?? ""} />
+        <label className="sm:col-span-6 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Recherche
+          </span>
+          <input
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Ex: bogolan, robe, wax…"
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </label>
+        <label className="sm:col-span-3 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Budget min (FCFA)
+          </span>
+          <input
+            name="min"
+            defaultValue={minXof?.toString() ?? ""}
+            inputMode="numeric"
+            placeholder="0"
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </label>
+        <label className="sm:col-span-3 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Budget max (FCFA)
+          </span>
+          <input
+            name="max"
+            defaultValue={maxXof?.toString() ?? ""}
+            inputMode="numeric"
+            placeholder="200000"
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </label>
+        <div className="sm:col-span-12 flex flex-wrap gap-3">
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+          >
+            Filtrer
+          </button>
+          <Link
+            href={buildShopHref({ category: categorySlug })}
+            className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-sm font-semibold text-zinc-950 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+          >
+            Réinitialiser
+          </Link>
+        </div>
+      </form>
+
       {categories.length > 0 ? (
         <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap">
           <Link
-            href="/shop"
+            href={buildShopHref({ q, min: minXof?.toString(), max: maxXof?.toString() })}
             className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
               !selectedCategory
                 ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
@@ -79,7 +184,12 @@ export default async function ShopPage({
             return (
               <Link
                 key={c.id}
-                href={`/shop?category=${encodeURIComponent(c.slug)}`}
+                href={buildShopHref({
+                  category: c.slug,
+                  q,
+                  min: minXof?.toString(),
+                  max: maxXof?.toString(),
+                })}
                 className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
                   active
                     ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
@@ -127,7 +237,7 @@ export default async function ShopPage({
 
       {products.length === 0 ? (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Aucun article pour cette catégorie.
+          Aucun article ne correspond à ces filtres.
         </p>
       ) : null}
     </div>
