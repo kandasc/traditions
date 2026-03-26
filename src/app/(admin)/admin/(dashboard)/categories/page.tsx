@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import slugify from "slugify";
+import { revalidatePath } from "next/cache";
 
 export default async function AdminCategoriesPage() {
   async function autoCategorize() {
@@ -20,7 +21,7 @@ export default async function AdminCategoriesPage() {
       await prisma.category.upsert({
         where: { slug: c.slug },
         create: { ...c, isActive: true },
-        update: { name: c.name, sortOrder: c.sortOrder },
+        update: { name: c.name, sortOrder: c.sortOrder, isActive: true },
       });
     }
 
@@ -58,6 +59,28 @@ export default async function AdminCategoriesPage() {
       }
     }
 
+    // Pick a featured picture per category (if missing) from one of its products.
+    const catsToFill = await prisma.category.findMany({
+      where: { isActive: true, imageUrl: null },
+      select: { id: true },
+      take: 100,
+    });
+    for (const c of catsToFill) {
+      const prod = await prisma.product.findFirst({
+        where: { isActive: true, categories: { some: { id: c.id } } },
+        orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
+        include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      });
+      const url = prod?.images?.[0]?.url ?? null;
+      if (url) {
+        await prisma.category.update({
+          where: { id: c.id },
+          data: { imageUrl: url },
+        });
+      }
+    }
+
+    revalidatePath("/");
     redirect("/admin/categories");
   }
 
