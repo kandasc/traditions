@@ -8,6 +8,7 @@ import { AdminSignOutButton } from "@/app/(admin)/admin/(dashboard)/sign-out-but
 const items: { href: string; label: string }[] = [
   { href: "/", label: "Voir le site" },
   { href: "/admin/products", label: "Produits" },
+  { href: "/admin/categories", label: "Catégories" },
   { href: "/admin/orders", label: "Commandes" },
   { href: "/admin/report", label: "Rapport" },
   { href: "/admin/delivery-zones", label: "Livraison" },

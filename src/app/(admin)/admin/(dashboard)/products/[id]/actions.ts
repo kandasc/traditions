@@ -100,6 +100,7 @@ export async function updateProduct(id: string, formData: FormData) {
   const slugRaw = String(formData.get("slug") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
   const featured = formData.get("featured") === "on";
+  const categoryIdsJson = String(formData.get("categoryIdsJson") ?? "").trim();
   const priceXofRaw = String(formData.get("priceXof") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const details = String(formData.get("details") ?? "").trim();
@@ -130,6 +131,19 @@ export async function updateProduct(id: string, formData: FormData) {
     ? parseVariantsJson(variantsJson)
     : parseVariantLines(variantBlock);
 
+  const categoryIds = (() => {
+    if (!categoryIdsJson) return [] as string[];
+    try {
+      const v = JSON.parse(categoryIdsJson) as unknown;
+      if (!Array.isArray(v)) return [];
+      return v
+        .map((x) => String(x ?? "").trim())
+        .filter((x) => x.length > 0);
+    } catch {
+      return [];
+    }
+  })();
+
   await prisma.$transaction([
     prisma.productImage.deleteMany({ where: { productId: id } }),
     prisma.productVariant.deleteMany({ where: { productId: id } }),
@@ -143,6 +157,9 @@ export async function updateProduct(id: string, formData: FormData) {
         priceXof: Number.isFinite(priceXof as number) ? priceXof : null,
         description: description || null,
         details: details || null,
+        categories: {
+          set: categoryIds.map((cid) => ({ id: cid })),
+        },
       },
     }),
   ]);

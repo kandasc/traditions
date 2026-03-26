@@ -172,6 +172,31 @@ async function main() {
     update: { value: "Traditions" },
   });
 
+  const defaultCategories = [
+    { name: "Robes", slug: "robes", sortOrder: 10 },
+    { name: "Ensembles", slug: "ensembles", sortOrder: 20 },
+    { name: "Boubous", slug: "boubous", sortOrder: 30 },
+    { name: "Tops", slug: "tops", sortOrder: 40 },
+    { name: "Pantalons", slug: "pantalons", sortOrder: 50 },
+    { name: "Jupes", slug: "jupes", sortOrder: 60 },
+    { name: "Accessoires", slug: "accessoires", sortOrder: 70 },
+  ];
+  for (const c of defaultCategories) {
+    await prisma.category.upsert({
+      where: { slug: c.slug },
+      create: { ...c, isActive: true },
+      update: { name: c.name, sortOrder: c.sortOrder, isActive: true },
+    });
+  }
+
+  const categoriesBySlug = new Map(
+    (
+      await prisma.category.findMany({
+        select: { id: true, slug: true },
+      })
+    ).map((c) => [c.slug, c.id] as const),
+  );
+
   const products = await scrapeProductsFromTraditions();
 
   for (const p of products) {
@@ -252,6 +277,34 @@ async function main() {
           isActive: true,
         })),
       });
+    }
+
+    // Best-effort auto-categorization for products without a category.
+    // Never overwrite manual assignments: only set when the product has no categories.
+    const alreadyCategorized = await prisma.product.count({
+      where: { id: product.id, categories: { some: {} } },
+    });
+    if (!alreadyCategorized) {
+      const n = p.name.toLowerCase();
+      const slugs: string[] = [];
+      if (/\brobe(s)?\b/.test(n)) slugs.push("robes");
+      if (/\bensemble(s)?\b/.test(n)) slugs.push("ensembles");
+      if (/\bboubou(x|s)?\b/.test(n)) slugs.push("boubous");
+      if (/\bkaftan(s)?\b/.test(n)) slugs.push("robes");
+      if (/\bchemise(s)?\b/.test(n) || /\btop(s)?\b/.test(n)) slugs.push("tops");
+      if (/\bpantalon(s)?\b/.test(n)) slugs.push("pantalons");
+      if (/\bjupe(s)?\b/.test(n)) slugs.push("jupes");
+      if (/\baccessoire(s)?\b/.test(n)) slugs.push("accessoires");
+
+      const ids = [...new Set(slugs)]
+        .map((s) => categoriesBySlug.get(s))
+        .filter((x): x is string => typeof x === "string");
+      if (ids.length > 0) {
+        await prisma.product.update({
+          where: { id: product.id },
+          data: { categories: { set: ids.map((id) => ({ id })) } },
+        });
+      }
     }
   }
 

@@ -2,38 +2,96 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { SmartImage } from "@/components/SmartImage";
 
-export default async function ShopPage() {
-  const products = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      OR: [
-        {
-          variants: {
-            some: {
-              isActive: true,
-              OR: [{ stock: null }, { stock: { gt: 0 } }],
+function pickSingle(v: string | string[] | undefined): string | undefined {
+  if (!v) return undefined;
+  return Array.isArray(v) ? v[0] : v;
+}
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const categorySlug = (pickSingle(sp.category) ?? "").trim() || null;
+
+  const [categories, products] = await Promise.all([
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    prisma.product.findMany({
+      where: {
+        isActive: true,
+        ...(categorySlug
+          ? { categories: { some: { slug: categorySlug } } }
+          : {}),
+        OR: [
+          {
+            variants: {
+              some: {
+                isActive: true,
+                OR: [{ stock: null }, { stock: { gt: 0 } }],
+              },
             },
           },
-        },
-        // Products without variants stay visible as long as they are active.
-        { variants: { none: { isActive: true } } },
-      ],
-    },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-  });
+          // Products without variants stay visible as long as they are active.
+          { variants: { none: { isActive: true } } },
+        ],
+      },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    }),
+  ]);
+
+  const selectedCategory =
+    categorySlug != null
+      ? categories.find((c) => c.slug === categorySlug) ?? null
+      : null;
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
-          Shop
+          {selectedCategory ? selectedCategory.name : "Shop"}
         </h1>
         <p className="max-w-prose text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-          Découvrez nos pièces. Filtrage, collections et stock seront gérés depuis
-          l’admin.
+          {selectedCategory
+            ? "Articles filtrés par catégorie."
+            : "Découvrez nos pièces. Filtrez par catégorie."}
         </p>
       </div>
+
+      {categories.length > 0 ? (
+        <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap">
+          <Link
+            href="/shop"
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
+              !selectedCategory
+                ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+            }`}
+          >
+            Tout
+          </Link>
+          {categories.map((c) => {
+            const active = selectedCategory?.id === c.id;
+            return (
+              <Link
+                key={c.id}
+                href={`/shop?category=${encodeURIComponent(c.slug)}`}
+                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
+                  active
+                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                    : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                {c.name}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
         {products.map((p) => (
@@ -66,6 +124,12 @@ export default async function ShopPage() {
           </Link>
         ))}
       </div>
+
+      {products.length === 0 ? (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Aucun article pour cette catégorie.
+        </p>
+      ) : null}
     </div>
   );
 }

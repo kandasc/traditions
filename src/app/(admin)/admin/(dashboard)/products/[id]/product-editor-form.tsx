@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { nanoid } from "nanoid";
 import { updateProduct } from "./actions";
@@ -13,6 +14,13 @@ export type ProductEditorInitial = {
   priceXof: number | null;
   isActive: boolean;
   featured: boolean;
+  categoryIds: string[];
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+  }[];
   description: string;
   details: string;
   images: { url: string; alt: string | null }[];
@@ -82,6 +90,10 @@ export function ProductEditorForm({
     })),
   );
 
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    () => initial.categoryIds ?? [],
+  );
+
   return (
     <form
       className="mt-6 flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6"
@@ -89,6 +101,7 @@ export function ProductEditorForm({
         e.preventDefault();
         setError(null);
         const fd = new FormData(e.currentTarget);
+        fd.set("categoryIdsJson", JSON.stringify(selectedCategoryIds));
         fd.set(
           "imagesJson",
           JSON.stringify(
@@ -171,6 +184,58 @@ export function ProductEditorForm({
           />
           <span className="text-sm text-zinc-800">Mis en avant (accueil)</span>
         </label>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+              Catégories
+            </p>
+            <p className="text-xs text-zinc-500">
+              Affichées sur l’accueil et utilisées pour filtrer la boutique.
+            </p>
+          </div>
+          <Link
+            className="text-xs font-semibold text-zinc-950 underline decoration-zinc-300"
+            href="/admin/categories"
+          >
+            Gérer les catégories →
+          </Link>
+        </div>
+        {initial.categories.length === 0 ? (
+          <p className="mt-3 text-sm text-zinc-600">
+            Aucune catégorie. Créez-en dans l’admin.
+          </p>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {initial.categories.map((c) => {
+              const active = selectedCategoryIds.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() =>
+                    setSelectedCategoryIds((prev) =>
+                      prev.includes(c.id)
+                        ? prev.filter((x) => x !== c.id)
+                        : [...prev, c.id],
+                    )
+                  }
+                  className={`min-h-10 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    active
+                      ? "border-zinc-950 bg-zinc-950 text-white"
+                      : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+                  } ${!c.isActive ? "opacity-60" : ""}`}
+                  title={!c.isActive ? "Catégorie inactive" : c.slug}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/80 p-4">

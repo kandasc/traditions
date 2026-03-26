@@ -10,13 +10,19 @@ export default async function AdminProductEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      variants: { orderBy: { id: "asc" } },
-    },
-  });
+  const [product, categories] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { orderBy: { id: "asc" } },
+        categories: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
+      },
+    }),
+    prisma.category.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  ]);
   if (!product) return notFound();
 
   return (
@@ -36,6 +42,13 @@ export default async function AdminProductEditPage({
           priceXof: product.priceXof,
           isActive: product.isActive,
           featured: product.featured,
+          categoryIds: product.categories.map((c) => c.id),
+          categories: categories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            isActive: c.isActive,
+          })),
           description: product.description ?? "",
           details: product.details ?? "",
           images: product.images.map((im) => ({

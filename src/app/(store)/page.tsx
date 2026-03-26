@@ -7,7 +7,14 @@ const HOMEPAGE_HERO_FALLBACK_IMAGE = "/hero-background.png";
 const HERO_BG_KEY = "hero.backgroundImageUrl";
 
 export default async function HomePage() {
-  const [featured, anyProductImage, heroBg, heroSlides] = await Promise.all([
+  const [categories, featured, anyProductImage, heroBg, heroSlides] =
+    await Promise.all([
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      take: 12,
+      include: { products: { where: { isActive: true }, take: 1, include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } } },
+    }),
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: [
@@ -94,10 +101,10 @@ export default async function HomePage() {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end sm:gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Sélection
+              Catégories
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Les pièces disponibles actuellement.
+              Explorez la boutique par univers.
             </p>
           </div>
           <Link
@@ -109,17 +116,19 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {featured.map((p) => (
+          {categories.map((c) => {
+            const img = c.products[0]?.images?.[0];
+            return (
             <Link
-              key={p.id}
-              href={`/shop/${p.slug}`}
+              key={c.id}
+              href={`/shop?category=${encodeURIComponent(c.slug)}`}
               className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
             >
               <div className="relative aspect-[4/5] w-full bg-zinc-50">
-                {p.images[0]?.url ? (
+                {img?.url ? (
                   <SmartImage
-                    src={p.images[0].url}
-                    alt={p.images[0].alt ?? p.name}
+                    src={img.url}
+                    alt={img.alt ?? c.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     sizes="(max-width: 768px) 50vw, 25vw"
@@ -130,19 +139,19 @@ export default async function HomePage() {
               </div>
               <div className="flex flex-col gap-1 p-3 sm:p-4">
                 <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 sm:text-sm">
-                  {p.name}
+                  {c.name}
                 </p>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  {p.priceXof ? `${p.priceXof.toLocaleString("fr-FR")} FCFA` : "—"}
+                  Voir les articles →
                 </p>
               </div>
             </Link>
-          ))}
+          );
+          })}
         </div>
-        {featured.length === 0 ? (
+        {categories.length === 0 ? (
           <p className="text-sm text-zinc-600">
-            Aucun produit en base pour le moment. Importez les données (seed) ou
-            ajoutez des produits depuis l’admin.
+            Aucune catégorie active pour le moment. Ajoutez-en depuis l’admin.
           </p>
         ) : null}
       </section>
