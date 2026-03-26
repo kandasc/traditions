@@ -68,6 +68,17 @@ export default async function AdminHome() {
         </Link>
       </div>
       <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconFile className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
+        <p className="text-sm text-zinc-600">Catégories</p>
+        <p className="mt-2 text-3xl font-semibold text-zinc-950">—</p>
+        <Link
+          className="mt-4 inline-flex text-sm font-semibold text-zinc-950 hover:underline"
+          href="/admin/categories"
+        >
+          Gérer les catégories →
+        </Link>
+      </div>
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
         <IconReceipt className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Commandes</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">{ordersCount}</p>

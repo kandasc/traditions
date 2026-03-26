@@ -81,6 +81,19 @@ export default async function AdminCategoriesPage() {
     }
 
     revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/categories");
+    redirect("/admin/categories");
+  }
+
+  async function deleteCategory(formData: FormData) {
+    "use server";
+    const id = String(formData.get("id") ?? "").trim();
+    if (!id) return;
+    await prisma.category.delete({ where: { id } });
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/categories");
     redirect("/admin/categories");
   }
 
@@ -169,6 +182,15 @@ export default async function AdminCategoriesPage() {
                 >
                   Voir
                 </Link>
+                <form action={deleteCategory}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <button
+                    type="submit"
+                    className="text-sm font-semibold text-red-700 hover:underline"
+                  >
+                    Supprimer
+                  </button>
+                </form>
               </div>
             </div>
           ))

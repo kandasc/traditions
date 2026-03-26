@@ -7,6 +7,15 @@ function pickSingle(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
+function pickMany(v: string | string[] | undefined): string[] {
+  if (!v) return [];
+  const arr = Array.isArray(v) ? v : [v];
+  return arr
+    .flatMap((x) => String(x ?? "").split(","))
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
 function clampInt(n: number, min: number, max: number) {
   if (!Number.isFinite(n)) return min;
   return Math.max(min, Math.min(max, Math.trunc(n)));
@@ -39,33 +48,16 @@ export default async function ShopPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const categorySlug = (pickSingle(sp.category) ?? "").trim() || null;
+  const categorySlugsRaw = pickMany(sp.category);
   const q = (pickSingle(sp.q) ?? "").trim() || null;
   const min = parseBudget((pickSingle(sp.min) ?? "").trim() || null);
   const max = parseBudget((pickSingle(sp.max) ?? "").trim() || null);
   const minXof = min != null && max != null ? Math.min(min, max) : min;
   const maxXof = min != null && max != null ? Math.max(min, max) : max;
 
-  const productWhere = {
-    isActive: true,
-    ...(categorySlug ? { categories: { some: { slug: categorySlug } } } : {}),
-    ...(q
-      ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" as const } },
-            { description: { contains: q, mode: "insensitive" as const } },
-            { details: { contains: q, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-    ...(minXof != null || maxXof != null
-      ? {
-          priceXof: {
-            ...(minXof != null ? { gte: minXof } : {}),
-            ...(maxXof != null ? { lte: maxXof } : {}),
-          },
-        }
-      : {}),
+  const categorySlugs = [...new Set(categorySlugsRaw)].slice(0, 12);
+
+  const stockFilter = {
     OR: [
       {
         variants: {
@@ -77,6 +69,35 @@ export default async function ShopPage({
       },
       // Products without variants stay visible as long as they are active.
       { variants: { none: { isActive: true } } },
+    ],
+  };
+
+  const productWhere = {
+    isActive: true,
+    ...(categorySlugs.length > 0
+      ? { categories: { some: { slug: { in: categorySlugs }, isActive: true } } }
+      : {}),
+    ...(minXof != null || maxXof != null
+      ? {
+          priceXof: {
+            ...(minXof != null ? { gte: minXof } : {}),
+            ...(maxXof != null ? { lte: maxXof } : {}),
+          },
+        }
+      : {}),
+    AND: [
+      stockFilter,
+      ...(q
+        ? [
+            {
+              OR: [
+                { name: { contains: q, mode: "insensitive" as const } },
+                { description: { contains: q, mode: "insensitive" as const } },
+                { details: { contains: q, mode: "insensitive" as const } },
+              ],
+            },
+          ]
+        : []),
     ],
   };
 
@@ -92,22 +113,19 @@ export default async function ShopPage({
     }),
   ]);
 
-  const selectedCategory =
-    categorySlug != null
-      ? categories.find((c) => c.slug === categorySlug) ?? null
-      : null;
+  const selectedCategories =
+    categorySlugs.length > 0
+      ? categories.filter((c) => categorySlugs.includes(c.slug))
+      : [];
+  const title =
+    selectedCategories.length === 1 ? selectedCategories[0]!.name : "Shop";
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-4xl">
-          {selectedCategory ? selectedCategory.name : "Shop"}
+          {title}
         </h1>
-        <p className="max-w-prose text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-          {selectedCategory
-            ? "Articles filtrés par catégorie."
-            : "Découvrez nos pièces. Filtrez par catégorie."}
-        </p>
       </div>
 
       <form
@@ -115,7 +133,35 @@ export default async function ShopPage({
         action="/shop"
         method="get"
       >
-        <input type="hidden" name="category" value={categorySlug ?? ""} />
+        <div className="sm:col-span-12 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Catégories
+          </span>
+          <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap">
+            {categories.map((c) => {
+              const active = categorySlugs.includes(c.slug);
+              return (
+                <label
+                  key={c.id}
+                  className={`shrink-0 cursor-pointer select-none rounded-full border px-4 py-2 text-sm font-semibold ${
+                    active
+                      ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                      : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    name="category"
+                    value={c.slug}
+                    defaultChecked={active}
+                    className="sr-only"
+                  />
+                  {c.name}
+                </label>
+              );
+            })}
+          </div>
+        </div>
         <label className="sm:col-span-6 flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
             Recherche
@@ -159,49 +205,13 @@ export default async function ShopPage({
             Filtrer
           </button>
           <Link
-            href={buildShopHref({ category: categorySlug })}
+            href="/shop"
             className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-sm font-semibold text-zinc-950 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
           >
             Réinitialiser
           </Link>
         </div>
       </form>
-
-      {categories.length > 0 ? (
-        <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap">
-          <Link
-            href={buildShopHref({ q, min: minXof?.toString(), max: maxXof?.toString() })}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
-              !selectedCategory
-                ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
-            }`}
-          >
-            Tout
-          </Link>
-          {categories.map((c) => {
-            const active = selectedCategory?.id === c.id;
-            return (
-              <Link
-                key={c.id}
-                href={buildShopHref({
-                  category: c.slug,
-                  q,
-                  min: minXof?.toString(),
-                  max: maxXof?.toString(),
-                })}
-                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
-                  active
-                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                    : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
-                }`}
-              >
-                {c.name}
-              </Link>
-            );
-          })}
-        </div>
-      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
         {products.map((p) => (

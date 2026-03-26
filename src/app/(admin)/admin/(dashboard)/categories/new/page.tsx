@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import slugify from "slugify";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { AdminCategoryImageUploadField } from "@/components/AdminCategoryImageUploadField";
 
 async function createCategory(formData: FormData) {
@@ -32,6 +33,9 @@ async function createCategory(formData: FormData) {
     },
   });
 
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/admin/categories");
   redirect(`/admin/categories/${category.id}`);
 }
 

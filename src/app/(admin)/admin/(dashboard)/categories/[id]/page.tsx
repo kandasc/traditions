@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import slugify from "slugify";
+import { revalidatePath } from "next/cache";
 import { AdminCategoryImageUploadField } from "@/components/AdminCategoryImageUploadField";
 
 export default async function EditCategoryPage({
@@ -57,6 +58,18 @@ export default async function EditCategoryPage({
       },
     });
 
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/categories");
+    redirect("/admin/categories");
+  }
+
+  async function deleteCategory() {
+    "use server";
+    await prisma.category.delete({ where: { id } });
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/categories");
     redirect("/admin/categories");
   }
 
@@ -126,6 +139,15 @@ export default async function EditCategoryPage({
           type="submit"
         >
           Enregistrer
+        </button>
+      </form>
+
+      <form action={deleteCategory} className="mt-4">
+        <button
+          className="inline-flex h-11 items-center justify-center rounded-full border border-red-200 bg-white px-6 text-sm font-semibold text-red-700 hover:bg-red-50"
+          type="submit"
+        >
+          Supprimer la catégorie
         </button>
       </form>
     </div>

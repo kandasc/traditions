@@ -9,7 +9,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Traditions — Boutique",
+  title: "Traditions-Mode",
   description: "Authenticité et traditions riment avec modernisme.",
 };
 
