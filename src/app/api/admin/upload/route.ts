@@ -46,10 +46,20 @@ export async function POST(req: Request) {
     );
   }
 
-  const productId = String(form.get("productId") ?? "misc").replace(/[^a-zA-Z0-9-_]/g, "") || "misc";
+  const productId = String(form.get("productId") ?? "")
+    .replace(/[^a-zA-Z0-9-_]/g, "")
+    .trim();
+  const categoryId = String(form.get("categoryId") ?? "")
+    .replace(/[^a-zA-Z0-9-_]/g, "")
+    .trim();
+  const bucket = categoryId
+    ? `categories/${categoryId}`
+    : productId
+      ? `products/${productId}`
+      : "misc";
   const orig = file.name.replace(/[^a-zA-Z0-9._-]/g, "") || "image";
   const ext = orig.includes(".") ? orig.slice(orig.lastIndexOf(".") + 1).slice(0, 8) : "jpg";
-  const pathname = `traditions/admin/${productId}/${nanoid(10)}.${ext}`;
+  const pathname = `traditions/admin/${bucket}/${nanoid(10)}.${ext}`;
 
   const blob = await put(pathname, file, {
     access: "public",
