@@ -173,13 +173,12 @@ async function main() {
   });
 
   const defaultCategories = [
-    { name: "Robes", slug: "robes", sortOrder: 10 },
-    { name: "Ensembles", slug: "ensembles", sortOrder: 20 },
-    { name: "Boubous", slug: "boubous", sortOrder: 30 },
-    { name: "Tops", slug: "tops", sortOrder: 40 },
-    { name: "Pantalons", slug: "pantalons", sortOrder: 50 },
-    { name: "Jupes", slug: "jupes", sortOrder: 60 },
-    { name: "Accessoires", slug: "accessoires", sortOrder: 70 },
+    { name: "Bogolan", slug: "bogolan", sortOrder: 10 },
+    { name: "Kimono", slug: "kimono", sortOrder: 20 },
+    { name: "Robe", slug: "robe", sortOrder: 30 },
+    { name: "Wax", slug: "wax", sortOrder: 40 },
+    { name: "Jupe", slug: "jupe", sortOrder: 50 },
+    { name: "Pantalon", slug: "pantalon", sortOrder: 60 },
   ];
   for (const c of defaultCategories) {
     await prisma.category.upsert({
@@ -285,16 +284,19 @@ async function main() {
       where: { id: product.id, categories: { some: {} } },
     });
     if (!alreadyCategorized) {
-      const n = p.name.toLowerCase();
+      const blob = `${p.name}\n${p.description ?? ""}\n${p.details ?? ""}`.toLowerCase();
       const slugs: string[] = [];
-      if (/\brobe(s)?\b/.test(n)) slugs.push("robes");
-      if (/\bensemble(s)?\b/.test(n)) slugs.push("ensembles");
-      if (/\bboubou(x|s)?\b/.test(n)) slugs.push("boubous");
-      if (/\bkaftan(s)?\b/.test(n)) slugs.push("robes");
-      if (/\bchemise(s)?\b/.test(n) || /\btop(s)?\b/.test(n)) slugs.push("tops");
-      if (/\bpantalon(s)?\b/.test(n)) slugs.push("pantalons");
-      if (/\bjupe(s)?\b/.test(n)) slugs.push("jupes");
-      if (/\baccessoire(s)?\b/.test(n)) slugs.push("accessoires");
+      if (blob.includes("bogolan")) slugs.push("bogolan");
+      if (blob.includes("wax")) slugs.push("wax");
+      if (/\bkimono\b/.test(blob)) slugs.push("kimono");
+      if (
+        /\brobe(s)?\b/.test(blob) ||
+        /\bkaftan(s)?\b/.test(blob) ||
+        /\bcaftan(s)?\b/.test(blob)
+      )
+        slugs.push("robe");
+      if (/\bjupe(s)?\b/.test(blob)) slugs.push("jupe");
+      if (/\bpantalon(s)?\b/.test(blob)) slugs.push("pantalon");
 
       const ids = [...new Set(slugs)]
         .map((s) => categoriesBySlug.get(s))

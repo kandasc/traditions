@@ -8,13 +8,12 @@ export default async function AdminCategoriesPage() {
     "use server";
 
     const defaults = [
-      { name: "Robes", slug: "robes", sortOrder: 10 },
-      { name: "Ensembles", slug: "ensembles", sortOrder: 20 },
-      { name: "Boubous", slug: "boubous", sortOrder: 30 },
-      { name: "Tops", slug: "tops", sortOrder: 40 },
-      { name: "Pantalons", slug: "pantalons", sortOrder: 50 },
-      { name: "Jupes", slug: "jupes", sortOrder: 60 },
-      { name: "Accessoires", slug: "accessoires", sortOrder: 70 },
+      { name: "Bogolan", slug: "bogolan", sortOrder: 10 },
+      { name: "Kimono", slug: "kimono", sortOrder: 20 },
+      { name: "Robe", slug: "robe", sortOrder: 30 },
+      { name: "Wax", slug: "wax", sortOrder: 40 },
+      { name: "Jupe", slug: "jupe", sortOrder: 50 },
+      { name: "Pantalon", slug: "pantalon", sortOrder: 60 },
     ];
 
     for (const c of defaults) {
@@ -25,32 +24,7 @@ export default async function AdminCategoriesPage() {
       });
     }
 
-    // Also create a few categories inferred from existing products (best-effort).
-    const products = await prisma.product.findMany({
-      select: { id: true, name: true },
-      orderBy: { createdAt: "desc" },
-      take: 400,
-    });
-    const inferred: string[] = [];
-    for (const p of products) {
-      const n = p.name.toLowerCase();
-      if (n.includes("kimono")) inferred.push("Kimonos");
-      if (n.includes("abaya")) inferred.push("Abayas");
-      if (n.includes("caftan") || n.includes("kaftan")) inferred.push("Caftans");
-      if (n.includes("homme")) inferred.push("Homme");
-      if (n.includes("enfant")) inferred.push("Enfant");
-    }
-    for (const name of [...new Set(inferred)].slice(0, 12)) {
-      const base = slugify(name, { lower: true, strict: true }) || "categorie";
-      let slug = base;
-      let i = 2;
-      while (await prisma.category.findUnique({ where: { slug } })) {
-        slug = `${base}-${i++}`;
-      }
-      await prisma.category.create({
-        data: { name, slug, isActive: true, sortOrder: 200 },
-      });
-    }
+    // (Optional) keep inferred categories disabled: user asked for a specific list only.
 
     const categories = await prisma.category.findMany({
       select: { id: true, slug: true },
@@ -58,26 +32,20 @@ export default async function AdminCategoriesPage() {
     const bySlug = new Map(categories.map((c) => [c.slug, c.id] as const));
 
     // Assign categories only to products that currently have none.
-    const uncategorized = await prisma.product.findMany({
+    const uncategorizedFull = await prisma.product.findMany({
       where: { categories: { none: {} } },
-      select: { id: true, name: true },
+      select: { id: true, name: true, description: true, details: true },
       take: 800,
     });
-    for (const p of uncategorized) {
-      const n = p.name.toLowerCase();
+    for (const p of uncategorizedFull) {
+      const blob = `${p.name}\n${p.description ?? ""}\n${p.details ?? ""}`.toLowerCase();
       const slugs: string[] = [];
-      if (/\brobe(s)?\b/.test(n)) slugs.push("robes");
-      if (/\bensemble(s)?\b/.test(n)) slugs.push("ensembles");
-      if (/\bboubou(x|s)?\b/.test(n)) slugs.push("boubous");
-      if (/\bchemise(s)?\b/.test(n) || /\btop(s)?\b/.test(n)) slugs.push("tops");
-      if (/\bpantalon(s)?\b/.test(n)) slugs.push("pantalons");
-      if (/\bjupe(s)?\b/.test(n)) slugs.push("jupes");
-      if (/\baccessoire(s)?\b/.test(n)) slugs.push("accessoires");
-      if (n.includes("kimono")) slugs.push("kimonos");
-      if (n.includes("abaya")) slugs.push("abayas");
-      if (n.includes("caftan") || n.includes("kaftan")) slugs.push("caftans");
-      if (n.includes("homme")) slugs.push("homme");
-      if (n.includes("enfant")) slugs.push("enfant");
+      if (blob.includes("bogolan")) slugs.push("bogolan");
+      if (blob.includes("wax")) slugs.push("wax");
+      if (/\bkimono\b/.test(blob)) slugs.push("kimono");
+      if (/\brobe(s)?\b/.test(blob) || /\bkaftan(s)?\b/.test(blob) || /\bcaftan(s)?\b/.test(blob)) slugs.push("robe");
+      if (/\bjupe(s)?\b/.test(blob)) slugs.push("jupe");
+      if (/\bpantalon(s)?\b/.test(blob)) slugs.push("pantalon");
 
       const ids = [...new Set(slugs)]
         .map((s) => bySlug.get(s))
