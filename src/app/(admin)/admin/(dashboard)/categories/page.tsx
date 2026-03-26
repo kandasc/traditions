@@ -44,8 +44,22 @@ export default async function AdminCategoriesPage() {
               className="grid grid-cols-12 items-center gap-3 border-b border-zinc-100 px-4 py-3 text-sm text-zinc-800 last:border-0"
             >
               <div className="col-span-5">
-                <div className="font-semibold text-zinc-950">{c.name}</div>
-                <div className="text-xs text-zinc-500">{c.slug}</div>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                    {c.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-zinc-950">{c.name}</div>
+                    <div className="truncate text-xs text-zinc-500">{c.slug}</div>
+                  </div>
+                </div>
               </div>
               <div className="col-span-2">{c._count.products}</div>
               <div className="col-span-2">{c.sortOrder}</div>

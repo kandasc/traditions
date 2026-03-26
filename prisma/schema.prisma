@@ -180,6 +180,8 @@ model Category {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
+  /// Optional featured image URL (used on homepage category cards)
+  imageUrl  String?
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
 

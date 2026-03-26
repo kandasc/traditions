@@ -13,7 +13,13 @@ export default async function HomePage() {
       where: { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       take: 12,
-      include: { products: { where: { isActive: true }, take: 1, include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } } },
+      include: {
+        products: {
+          where: { isActive: true },
+          take: 1,
+          include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+        },
+      },
     }),
     prisma.product.findMany({
       where: { isActive: true },
@@ -117,7 +123,7 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {categories.map((c) => {
-            const img = c.products[0]?.images?.[0];
+            const img = c.imageUrl ? { url: c.imageUrl, alt: c.name } : c.products[0]?.images?.[0];
             return (
             <Link
               key={c.id}
@@ -154,6 +160,60 @@ export default async function HomePage() {
             Aucune catégorie active pour le moment. Ajoutez-en depuis l’admin.
           </p>
         ) : null}
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end sm:gap-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+              Articles à la une
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Nos pièces mises en avant.
+            </p>
+          </div>
+          <Link
+            className="min-h-11 shrink-0 text-sm font-semibold text-zinc-950 dark:text-zinc-50"
+            href="/shop"
+          >
+            Voir le shop →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+          {featured.slice(0, 8).map((p) => (
+            <Link
+              key={p.id}
+              href={`/shop/${p.slug}`}
+              className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <div className="relative aspect-[4/5] w-full bg-zinc-50 dark:bg-zinc-900">
+                <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-zinc-950/85 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur dark:bg-white/90 dark:text-zinc-950">
+                  ★ À la une
+                </div>
+                {p.images[0]?.url ? (
+                  <SmartImage
+                    src={p.images[0].url}
+                    alt={p.images[0].alt ?? p.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    proxyWidth={720}
+                    proxyQuality={70}
+                  />
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-1 p-3 sm:p-4">
+                <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 sm:text-sm">
+                  {p.name}
+                </p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  {p.priceXof ? `${p.priceXof.toLocaleString("fr-FR")} FCFA` : "—"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </section>
     </div>
   );

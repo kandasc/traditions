@@ -19,6 +19,7 @@ export default async function EditCategoryPage({
 
     const name = String(formData.get("name") ?? "").trim();
     const slugRaw = String(formData.get("slug") ?? "").trim();
+    const imageUrl = String(formData.get("imageUrl") ?? "").trim();
     const sortRaw = String(formData.get("sortOrder") ?? "").trim();
     const isActive = formData.get("isActive") === "on";
     const sortOrder = sortRaw ? Number(sortRaw) : 0;
@@ -49,6 +50,7 @@ export default async function EditCategoryPage({
       data: {
         name,
         slug,
+        imageUrl: imageUrl || null,
         sortOrder: Number.isFinite(sortOrder) ? Math.round(sortOrder) : 0,
         isActive,
       },
@@ -84,6 +86,20 @@ export default async function EditCategoryPage({
             className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
             placeholder="Laisser vide pour régénérer depuis le nom"
           />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            Image mise en avant (URL)
+          </span>
+          <input
+            name="imageUrl"
+            defaultValue={category.imageUrl ?? ""}
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400"
+            placeholder="https://… ou /image.png"
+          />
+          <p className="text-xs text-zinc-500">
+            Si vide, on utilise une image d’article de la catégorie (si disponible).
+          </p>
         </label>
         <label className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
