@@ -1,5 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import {
+  IconBox,
+  IconChart,
+  IconFile,
+  IconReceipt,
+  IconTruck,
+  IconUsers,
+} from "@/components/admin-kpi-icons";
 
 export default async function AdminHome() {
   const [
@@ -35,7 +43,8 @@ export default async function AdminHome() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconBox className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Produits</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">
           {productsCount}
@@ -47,7 +56,8 @@ export default async function AdminHome() {
           Gérer les produits →
         </Link>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconFile className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Pages</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">{pagesCount}</p>
         <Link
@@ -57,7 +67,8 @@ export default async function AdminHome() {
           Gérer les pages →
         </Link>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconReceipt className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Commandes</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">{ordersCount}</p>
         <Link
@@ -67,8 +78,9 @@ export default async function AdminHome() {
           Voir les commandes →
         </Link>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-        <p className="text-sm text-zinc-600">Report détaillé</p>
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-violet-50/60 p-6">
+        <IconChart className="absolute right-3 top-3 h-10 w-10 text-violet-200" />
+        <p className="text-sm text-zinc-600">Rapport détaillé</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">
           {paidOrdersCount}
         </p>
@@ -80,10 +92,11 @@ export default async function AdminHome() {
           className="mt-4 inline-flex text-sm font-semibold text-zinc-950 hover:underline"
           href="/admin/report"
         >
-          Ouvrir le report →
+          Ouvrir le rapport →
         </Link>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconTruck className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Zones de livraison</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">{zonesCount}</p>
         <Link
@@ -93,7 +106,8 @@ export default async function AdminHome() {
           Frais et zones →
         </Link>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+        <IconUsers className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
         <p className="text-sm text-zinc-600">Utilisateurs</p>
         <p className="mt-2 text-3xl font-semibold text-zinc-950">{usersCount}</p>
         <Link

@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import {
+  IconChart,
+  IconCoin,
+  IconPin,
+  IconReceipt,
+  IconTruck,
+} from "@/components/admin-kpi-icons";
 
 const statusFr: Record<string, string> = {
   PENDING: "En attente",
@@ -97,35 +104,44 @@ export default async function AdminReportPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-950">
-          Report détaillé
-        </h1>
-        <p className="mt-2 text-sm text-zinc-600">
-          Indicateurs globaux + aperçu sur les {rangeDays} derniers jours.
-        </p>
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+          <IconChart className="h-8 w-8" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-950">
+            Rapport détaillé
+          </h1>
+          <p className="mt-2 text-sm text-zinc-600">
+            Indicateurs globaux + aperçu sur les {rangeDays} derniers jours.
+          </p>
+        </div>
       </div>
 
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+          <IconReceipt className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
           <p className="text-sm text-zinc-600">Total commandes</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-950">
             {totalOrders}
           </p>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-emerald-50/50 p-6">
+          <IconCoin className="absolute right-3 top-3 h-10 w-10 text-emerald-200" />
           <p className="text-sm text-zinc-600">CA encaissé (Payées)</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-950">
             {paidRevenueXof.toLocaleString("fr-FR")} FCFA
           </p>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-amber-50/50 p-6">
+          <IconTruck className="absolute right-3 top-3 h-10 w-10 text-amber-200" />
           <p className="text-sm text-zinc-600">Frais livraison (toutes statuts)</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-950">
             {deliveryFeeXof.toLocaleString("fr-FR")} FCFA
           </p>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+          <IconChart className="absolute right-3 top-3 h-10 w-10 text-zinc-200" />
           <p className="text-sm text-zinc-600">Statut en cours</p>
           <p className="mt-2 text-sm text-zinc-700">
             {pendingOrders} en attente · {cancelledOrders} annulées ·{" "}
@@ -138,7 +154,8 @@ export default async function AdminReportPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-2 rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="relative overflow-hidden lg:col-span-2 rounded-2xl border border-zinc-200 bg-white p-6">
+          <IconPin className="absolute right-4 top-4 h-8 w-8 text-zinc-200" />
           <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-600">
             Top zones (période)
           </h2>
@@ -214,57 +231,61 @@ export default async function AdminReportPage() {
           Historique détaillé (derniers {rangeDays} jours)
         </h2>
         <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-200">
-          <div className="min-w-[640px] overflow-hidden">
-          <div className="grid grid-cols-12 gap-3 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
-            <div className="col-span-2">Commande</div>
-            <div className="col-span-3">Client</div>
-            <div className="col-span-2">Zone</div>
-            <div className="col-span-1">Liv.</div>
-            <div className="col-span-2">Total</div>
-            <div className="col-span-2">Statut</div>
-          </div>
-          <div className="divide-y divide-zinc-100">
-            {rangeOrders.length === 0 ? (
-              <div className="px-4 py-8 text-sm text-zinc-600">
-                Aucune commande pour cette période.
-              </div>
-            ) : (
-              rangeOrders.map((o) => (
-                <div
-                  key={o.id}
-                  className="grid grid-cols-12 gap-3 px-4 py-3 text-sm text-zinc-800"
-                >
-                  <div className="col-span-2">
-                    <Link
-                      href={`/admin/orders/${o.id}`}
-                      className="font-mono text-xs text-zinc-600 hover:underline"
-                    >
-                      {o.id}
-                    </Link>
-                  </div>
-                  <div className="col-span-3">
-                    {o.user?.email ?? o.customerEmail ?? "Invité"}
-                  </div>
-                  <div className="col-span-2">
-                    {o.deliveryZone?.name ?? "—"}
-                  </div>
-                  <div className="col-span-1 font-semibold text-zinc-950">
-                    {o.deliveryFeeXof.toLocaleString("fr-FR")}
-                  </div>
-                  <div className="col-span-2 font-semibold text-zinc-950">
-                    {o.amountXof.toLocaleString("fr-FR")}
-                  </div>
-                  <div className="col-span-2">
-                    {statusFr[o.status] ?? o.status}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          </div>
+          <table className="w-full min-w-[52rem] table-fixed border-collapse text-left text-sm text-zinc-800">
+            <thead>
+              <tr className="border-b border-zinc-200 bg-zinc-50 text-xs font-semibold uppercase tracking-wider text-zinc-600">
+                <th className="w-[18%] px-3 py-3 align-bottom">
+                  Commande
+                </th>
+                <th className="w-[28%] px-3 py-3 align-bottom">Client</th>
+                <th className="w-[22%] px-3 py-3 align-bottom">Zone</th>
+                <th className="w-[8%] px-3 py-3 align-bottom">Liv.</th>
+                <th className="w-[12%] px-3 py-3 align-bottom">Total</th>
+                <th className="w-[12%] px-3 py-3 align-bottom">Statut</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {rangeOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-sm text-zinc-600">
+                    Aucune commande pour cette période.
+                  </td>
+                </tr>
+              ) : (
+                rangeOrders.map((o) => (
+                  <tr key={o.id} className="align-top">
+                    <td className="max-w-0 px-3 py-3">
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="break-all font-mono text-xs leading-snug text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-950"
+                      >
+                        {o.id}
+                      </Link>
+                    </td>
+                    <td className="max-w-0 px-3 py-3">
+                      <span className="break-words [overflow-wrap:anywhere] leading-snug">
+                        {o.user?.email ?? o.customerEmail ?? "Invité"}
+                      </span>
+                    </td>
+                    <td className="max-w-0 px-3 py-3 break-words leading-snug text-zinc-700">
+                      {o.deliveryZone?.name ?? "—"}
+                    </td>
+                    <td className="px-3 py-3 font-semibold text-zinc-950 whitespace-nowrap">
+                      {o.deliveryFeeXof.toLocaleString("fr-FR")}
+                    </td>
+                    <td className="px-3 py-3 font-semibold text-zinc-950 whitespace-nowrap">
+                      {o.amountXof.toLocaleString("fr-FR")}
+                    </td>
+                    <td className="px-3 py-3 break-words leading-snug">
+                      {statusFr[o.status] ?? o.status}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
   );
 }
-

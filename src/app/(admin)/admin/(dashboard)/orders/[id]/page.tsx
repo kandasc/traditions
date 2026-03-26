@@ -163,7 +163,7 @@ export default async function AdminOrderDetailPage({
                       cancelPath={`/admin/orders/${order.id}`}
                       className="inline-flex h-8 items-center rounded-lg bg-zinc-950 px-3 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
                     >
-                      Ouvrir SayelePay (SDK)
+                      Envoyer le lien de paiement (au client)
                     </ResumeSayelePayButton>
                   ) : null}
                 </div>
