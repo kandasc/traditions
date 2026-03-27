@@ -97,7 +97,7 @@ export default async function HomePage() {
           }}
         />
         <div className="absolute inset-0 bg-black/55" />
-        <div className="relative grid gap-6 p-6 sm:p-8 md:grid-cols-2 md:items-center">
+        <div className="relative grid gap-5 p-5 sm:gap-6 sm:p-6 md:grid-cols-2 md:items-center">
           <div className="flex flex-col gap-4">
             <p className="text-sm font-medium uppercase tracking-widest text-zinc-200">
               Traditions

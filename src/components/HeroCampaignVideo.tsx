@@ -8,7 +8,7 @@ export function HeroCampaignVideo({
   posterSrc?: string;
 }) {
   return (
-    <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/15 bg-black/30 shadow-2xl">
+    <div className="relative h-[22rem] w-full overflow-hidden rounded-2xl border border-white/15 bg-black/30 shadow-2xl sm:h-[24rem] md:h-[26rem] lg:h-[28rem]">
       <video
         className="absolute inset-0 h-full w-full object-cover"
         playsInline
