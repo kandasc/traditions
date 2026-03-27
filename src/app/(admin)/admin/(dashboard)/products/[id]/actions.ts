@@ -26,6 +26,7 @@ function parseVariantLines(raw: string) {
     sizeLabel: string | null;
     colorHex: string | null;
     imageUrl: string | null;
+    isPreorder: boolean;
   }[] = [];
   for (const line of lines) {
     const parts = line.split("|").map((p) => p.trim());
@@ -34,7 +35,7 @@ function parseVariantLines(raw: string) {
     const imageUrl = parts[2] || null;
     if (colorHex && !colorHex.startsWith("#")) colorHex = `#${colorHex}`;
     if (sizeLabel === "") sizeLabel = null;
-    out.push({ sizeLabel, colorHex, imageUrl });
+    out.push({ sizeLabel, colorHex, imageUrl, isPreorder: false });
   }
   return out;
 }
@@ -77,6 +78,7 @@ function parseVariantsJson(raw: string) {
       sizeLabel: string | null;
       colorHex: string | null;
       imageUrl: string | null;
+      isPreorder: boolean;
     }[] = [];
     for (const item of data) {
       if (!item || typeof item !== "object") continue;
@@ -86,8 +88,9 @@ function parseVariantsJson(raw: string) {
         typeof rec.colorHex === "string" ? rec.colorHex : null,
       );
       const imageUrl = String(rec.imageUrl ?? "").trim() || null;
+      const isPreorder = rec.isPreorder === true || rec.isPreorder === "true";
       if (!sizeLabel && !colorHex && !imageUrl) continue;
-      out.push({ sizeLabel, colorHex, imageUrl });
+      out.push({ sizeLabel, colorHex, imageUrl, isPreorder });
     }
     return out;
   } catch {
@@ -183,6 +186,7 @@ export async function updateProduct(id: string, formData: FormData) {
         colorHex: v.colorHex,
         imageUrl: v.imageUrl,
         isActive: true,
+        isPreorder: Boolean(v.isPreorder),
       })),
     });
   }

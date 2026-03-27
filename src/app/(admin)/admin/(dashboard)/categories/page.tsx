@@ -9,12 +9,10 @@ export default async function AdminCategoriesPage() {
     "use server";
 
     const defaults = [
-      { name: "Bogolan", slug: "bogolan", sortOrder: 10 },
-      { name: "Kimono", slug: "kimono", sortOrder: 20 },
-      { name: "Robe", slug: "robe", sortOrder: 30 },
-      { name: "Wax", slug: "wax", sortOrder: 40 },
-      { name: "Jupe", slug: "jupe", sortOrder: 50 },
-      { name: "Pantalon", slug: "pantalon", sortOrder: 60 },
+      { name: "ICON", slug: "icon", sortOrder: 10 },
+      { name: "HÉRITAGE", slug: "heritage", sortOrder: 20 },
+      { name: "MAISON", slug: "maison", sortOrder: 30 },
+      { name: "ACCESSOIRES", slug: "accessoires", sortOrder: 40 },
     ];
 
     for (const c of defaults) {
@@ -41,12 +39,14 @@ export default async function AdminCategoriesPage() {
     for (const p of uncategorizedFull) {
       const blob = `${p.name}\n${p.description ?? ""}\n${p.details ?? ""}`.toLowerCase();
       const slugs: string[] = [];
-      if (blob.includes("bogolan")) slugs.push("bogolan");
-      if (blob.includes("wax")) slugs.push("wax");
-      if (/\bkimono\b/.test(blob)) slugs.push("kimono");
-      if (/\brobe(s)?\b/.test(blob) || /\bkaftan(s)?\b/.test(blob) || /\bcaftan(s)?\b/.test(blob)) slugs.push("robe");
-      if (/\bjupe(s)?\b/.test(blob)) slugs.push("jupe");
-      if (/\bpantalon(s)?\b/.test(blob)) slugs.push("pantalon");
+      if (blob.includes("bogolan") || blob.includes("wax") || blob.includes("indigo"))
+        slugs.push("heritage");
+      if (/\bkimono\b/.test(blob) || /\brobe(s)?\b/.test(blob) || /\bkaftan(s)?\b/.test(blob) || /\bcaftan(s)?\b/.test(blob))
+        slugs.push("icon");
+      if (blob.includes("parfum") || blob.includes("bougie") || blob.includes("maison"))
+        slugs.push("maison");
+      if (blob.includes("sac") || blob.includes("ceinture") || blob.includes("accessoire"))
+        slugs.push("accessoires");
 
       const ids = [...new Set(slugs)]
         .map((s) => bySlug.get(s))

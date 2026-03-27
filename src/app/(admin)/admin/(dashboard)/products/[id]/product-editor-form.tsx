@@ -6,7 +6,13 @@ import { nanoid } from "nanoid";
 import { updateProduct } from "./actions";
 
 type ImageRow = { key: string; url: string; alt: string };
-type VariantRow = { key: string; sizeLabel: string; colorHex: string; imageUrl: string };
+type VariantRow = {
+  key: string;
+  sizeLabel: string;
+  colorHex: string;
+  imageUrl: string;
+  isPreorder: boolean;
+};
 
 export type ProductEditorInitial = {
   name: string;
@@ -28,6 +34,7 @@ export type ProductEditorInitial = {
     sizeLabel: string | null;
     colorHex: string | null;
     imageUrl: string | null;
+    isPreorder?: boolean;
   }[];
 };
 
@@ -87,6 +94,7 @@ export function ProductEditorForm({
       sizeLabel: v.sizeLabel ?? "",
       colorHex: v.colorHex ?? "",
       imageUrl: v.imageUrl ?? "",
+      isPreorder: Boolean(v.isPreorder),
     })),
   );
 
@@ -118,6 +126,7 @@ export function ProductEditorForm({
             sizeLabel: r.sizeLabel.trim() || null,
             colorHex: colorToDb(r.colorHex),
             imageUrl: r.imageUrl.trim() || null,
+            isPreorder: Boolean(r.isPreorder),
           }))
           .filter((v) => v.sizeLabel || v.colorHex || v.imageUrl);
         fd.set("variantsJson", JSON.stringify(variantPayload));
@@ -410,7 +419,13 @@ export function ProductEditorForm({
             onClick={() =>
               setVariants((s) => [
                 ...s,
-                { key: newKey(), sizeLabel: "", colorHex: "", imageUrl: "" },
+                {
+                  key: newKey(),
+                  sizeLabel: "",
+                  colorHex: "",
+                  imageUrl: "",
+                  isPreorder: false,
+                },
               ])
             }
           >
@@ -509,6 +524,23 @@ export function ProductEditorForm({
                       className="rounded-lg border border-zinc-200 px-2 py-1.5 font-mono text-xs outline-none focus:border-zinc-400"
                       placeholder="https://… (optionnel)"
                     />
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-700 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={row.isPreorder}
+                      onChange={(e) =>
+                        setVariants((list) =>
+                          list.map((r) =>
+                            r.key === row.key
+                              ? { ...r, isPreorder: e.target.checked }
+                              : r,
+                          ),
+                        )
+                      }
+                      className="h-4 w-4"
+                    />
+                    Précommande (confection 3–5 jours ouvrés avant expédition)
                   </label>
                   <div className="flex items-center gap-2 sm:col-span-2">
                     <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100">

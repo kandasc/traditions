@@ -236,6 +236,8 @@ model ProductVariant {
   imageUrl     String?
   isActive     Boolean @default(true)
   stock        Int?
+  /// If true, variant can be purchased even when stock is 0 (made on demand).
+  isPreorder   Boolean @default(false)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   cartItems CartItem[]

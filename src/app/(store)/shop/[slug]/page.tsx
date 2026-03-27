@@ -21,20 +21,21 @@ export default async function ProductPage({
 
   if (!product || !product.isActive) return notFound();
 
-  const inStockVariants = product.variants.filter(
-    (v) => v.stock == null || v.stock > 0,
+  const purchasableVariants = product.variants.filter(
+    (v) => v.isPreorder || v.stock == null || v.stock > 0,
   );
 
   // If a product has variants but all are out of stock, do not show it as available.
-  if (product.variants.length > 0 && inStockVariants.length === 0) {
+  if (product.variants.length > 0 && purchasableVariants.length === 0) {
     return notFound();
   }
 
-  const variantOptions = inStockVariants.map((v) => ({
+  const variantOptions = purchasableVariants.map((v) => ({
     id: v.id,
     sizeLabel: v.sizeLabel,
     colorHex: v.colorHex,
     stock: v.stock,
+    isPreorder: v.isPreorder,
   }));
 
   return (

@@ -1,6 +1,7 @@
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
+import { WhatsAppFloatingButton } from "@/components/WhatsAppFloatingButton";
 import type { ReactNode } from "react";
 
 export default function StoreLayout({ children }: { children: ReactNode }) {
@@ -11,6 +12,7 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
       <SiteFooter />
+      <WhatsAppFloatingButton />
       <AIAssistantWidget />
     </>
   );

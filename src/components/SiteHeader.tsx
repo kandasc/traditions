@@ -77,6 +77,14 @@ function CartBadge({ compact }: { compact?: boolean }) {
 const sheetLinkClass =
   "block border-b border-zinc-100 px-5 py-3.5 text-base font-medium text-zinc-800 hover:bg-zinc-50 active:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:active:bg-zinc-800";
 
+const MENU_LINKS: Array<{ label: string; href: string }> = [
+  { label: "SHOP", href: "/shop" },
+  { label: "L’ATELIER", href: "/atelier" },
+  { label: "LA MAISON", href: "/maison" },
+  { label: "JOURNAL", href: "/journal" },
+  { label: "CONTACT", href: "/contact" },
+];
+
 export function SiteHeader() {
   const { data: session, status } = useSession();
   const isAdmin = session?.user?.role === "admin";
@@ -116,27 +124,16 @@ export function SiteHeader() {
               onClick={() => setMobileOpen(false)}
             />
             <nav className="absolute right-0 top-0 flex h-full w-[min(100vw-2.5rem,22rem)] max-w-[100vw] flex-col overflow-y-auto border-l border-zinc-200 bg-white py-1 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] shadow-2xl dark:border-zinc-700 dark:bg-zinc-950">
-              <Link
-                href="/shop"
-                className={sheetLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                Shop
-              </Link>
-              <Link
-                href="/about"
-                className={sheetLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                La marque
-              </Link>
-              <Link
-                href="/atelier"
-                className={sheetLinkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                L’atelier
-              </Link>
+              {MENU_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={sheetLinkClass}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {l.label}
+                </Link>
+              ))}
               <div className="border-t border-zinc-200 px-3 py-4 dark:border-zinc-800">
                 <Link
                   href="/cart"
@@ -211,19 +208,16 @@ export function SiteHeader() {
           <span className="sr-only">SAYELE</span>
         </Link>
 
-        <nav className="hidden items-center gap-5 text-sm font-medium text-zinc-700 lg:flex dark:text-zinc-300">
-          <Link className="hover:text-zinc-950 dark:hover:text-white" href="/shop">
-            Shop
-          </Link>
-          <Link className="hover:text-zinc-950 dark:hover:text-white" href="/about">
-            La marque
-          </Link>
-          <Link
-            className="hover:text-zinc-950 dark:hover:text-white"
-            href="/atelier"
-          >
-            L’atelier
-          </Link>
+        <nav className="hidden items-center gap-6 text-sm font-semibold tracking-wide text-zinc-700 lg:flex dark:text-zinc-300">
+          {MENU_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              className="hover:text-zinc-950 dark:hover:text-white"
+              href={l.href}
+            >
+              {l.label}
+            </Link>
+          ))}
           <CartBadge />
           {status === "loading" ? null : session ? (
             <>

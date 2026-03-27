@@ -49,28 +49,36 @@ export default async function ShopPage({
 }) {
   const sp = await searchParams;
   const categorySlugsRaw = pickMany(sp.category);
+  const sizeRaw = pickMany(sp.size);
+  const availableOnly = (pickSingle(sp.available) ?? "1").trim() !== "0";
   const q = (pickSingle(sp.q) ?? "").trim() || null;
   const min = parseBudget((pickSingle(sp.min) ?? "").trim() || null);
   const max = parseBudget((pickSingle(sp.max) ?? "").trim() || null);
   const minXof = min != null && max != null ? Math.min(min, max) : min;
   const maxXof = min != null && max != null ? Math.max(min, max) : max;
 
-  const categorySlugs = [...new Set(categorySlugsRaw)].slice(0, 12);
+  const allowedCategorySlugs = ["icon", "heritage", "maison", "accessoires"] as const;
+  const categorySlugs = [...new Set(categorySlugsRaw)]
+    .filter((s) => allowedCategorySlugs.includes(s as any))
+    .slice(0, 12);
 
-  const stockFilter = {
-    OR: [
-      {
-        variants: {
-          some: {
-            isActive: true,
-            OR: [{ stock: null }, { stock: { gt: 0 } }],
+  const sizes = [...new Set(sizeRaw.map((s) => s.trim().toUpperCase()))].slice(0, 12);
+  const stockFilter = availableOnly
+    ? {
+        OR: [
+          {
+            variants: {
+              some: {
+                isActive: true,
+                OR: [{ isPreorder: true }, { stock: null }, { stock: { gt: 0 } }],
+              },
+            },
           },
-        },
-      },
-      // Products without variants stay visible as long as they are active.
-      { variants: { none: { isActive: true } } },
-    ],
-  };
+          // Products without variants stay visible as long as they are active.
+          { variants: { none: { isActive: true } } },
+        ],
+      }
+    : {};
 
   const productWhere = {
     isActive: true,
@@ -86,7 +94,19 @@ export default async function ShopPage({
         }
       : {}),
     AND: [
-      stockFilter,
+      ...(availableOnly ? [stockFilter] : []),
+      ...(sizes.length
+        ? [
+            {
+              variants: {
+                some: {
+                  isActive: true,
+                  sizeLabel: { in: sizes },
+                },
+              },
+            },
+          ]
+        : []),
       ...(q
         ? [
             {
@@ -101,10 +121,17 @@ export default async function ShopPage({
     ],
   };
 
-  const [categories, products] = await Promise.all([
+  const [categories, sizeOptions, products] = await Promise.all([
     prisma.category.findMany({
-      where: { isActive: true },
+      where: { isActive: true, slug: { in: [...allowedCategorySlugs] } },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    prisma.productVariant.findMany({
+      where: { isActive: true, sizeLabel: { not: null } },
+      distinct: ["sizeLabel"],
+      select: { sizeLabel: true },
+      orderBy: { sizeLabel: "asc" },
+      take: 60,
     }),
     prisma.product.findMany({
       where: productWhere,
@@ -119,6 +146,10 @@ export default async function ShopPage({
       : [];
   const title =
     selectedCategories.length === 1 ? selectedCategories[0]!.name : "Shop";
+
+  const sizeChoices = sizeOptions
+    .map((o) => (o.sizeLabel ?? "").trim())
+    .filter(Boolean);
 
   return (
     <div className="flex flex-col gap-8">
@@ -175,6 +206,23 @@ export default async function ShopPage({
         </label>
         <label className="sm:col-span-3 flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+            Taille
+          </span>
+          <select
+            name="size"
+            defaultValue={sizes[0] ?? ""}
+            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          >
+            <option value="">Toutes</option>
+            {sizeChoices.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="sm:col-span-3 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
             Budget min (FCFA)
           </span>
           <input
@@ -198,6 +246,19 @@ export default async function ShopPage({
           />
         </label>
         <div className="sm:col-span-12 flex flex-wrap gap-3">
+          <label className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+              Disponibilité
+            </span>
+            <select
+              name="available"
+              defaultValue={availableOnly ? "1" : "0"}
+              className="h-9 rounded-full border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="1">Disponible</option>
+              <option value="0">Tout afficher</option>
+            </select>
+          </label>
           <button
             type="submit"
             className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"

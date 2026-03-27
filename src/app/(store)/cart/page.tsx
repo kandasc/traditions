@@ -13,6 +13,7 @@ type CartLine = {
   imageUrl: string | null;
   sizeLabel: string | null;
   colorHex: string | null;
+  isPreorder?: boolean;
 };
 
 type CartJson = {
@@ -117,6 +118,11 @@ export default function CartPage() {
                   {[line.sizeLabel, line.colorHex].filter(Boolean).join(" · ")}
                 </p>
               )}
+              {line.isPreorder ? (
+                <p className="mt-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  Précommande — confection 3–5 jours ouvrés avant expédition
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <input

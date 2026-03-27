@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Variante invalide" }, { status: 400 });
     }
     const stock = v.stock;
-    if (stock != null && stock <= 0) {
+    if (!v.isPreorder && stock != null && stock <= 0) {
       return Response.json({ error: "Rupture de stock" }, { status: 400 });
     }
   } else if (product.variants.length > 0) {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     if (variantId) {
       const v = product.variants.find((x) => x.id === variantId);
       const stock = v?.stock ?? null;
-      if (stock != null) {
+      if (v && !v.isPreorder && stock != null) {
         const nextQty = existing.quantity + quantity;
         if (nextQty > stock) {
           return Response.json(
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     if (variantId) {
       const v = product.variants.find((x) => x.id === variantId);
       const stock = v?.stock ?? null;
-      if (stock != null && quantity > stock) {
+      if (v && !v.isPreorder && stock != null && quantity > stock) {
         return Response.json(
           {
             error: `Stock insuffisant (disponible: ${stock}).`,

@@ -89,7 +89,8 @@ export async function getCartPayload() {
     if (
       line.variantId &&
       line.variant?.stock != null &&
-      line.variant.stock <= 0
+      line.variant.stock <= 0 &&
+      !line.variant.isPreorder
     )
       continue;
     const lineTotal = line.product.priceXof * line.quantity;
@@ -105,6 +106,7 @@ export async function getCartPayload() {
       imageUrl: line.product.images[0]?.url ?? null,
       sizeLabel: line.variant?.sizeLabel ?? null,
       colorHex: line.variant?.colorHex ?? null,
+      isPreorder: line.variant?.isPreorder ?? false,
     });
   }
 
@@ -148,7 +150,7 @@ export async function getValidatedCartLinesForCheckout(): Promise<{
     if (line.variantId) {
       const v = line.variant;
       if (!v || v.productId !== p.id || !v.isActive) continue;
-      if (v.stock != null && v.stock <= 0) continue;
+      if (!v.isPreorder && v.stock != null && v.stock <= 0) continue;
     }
     const qty = Math.max(1, line.quantity);
     const unit = p.priceXof;
@@ -157,6 +159,7 @@ export async function getValidatedCartLinesForCheckout(): Promise<{
       variantId: line.variantId,
       sizeLabel: line.variant?.sizeLabel ?? null,
       colorHex: line.variant?.colorHex ?? null,
+      isPreorder: line.variant?.isPreorder ?? false,
     };
     lines.push({
       productId: p.id,

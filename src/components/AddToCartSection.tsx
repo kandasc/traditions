@@ -8,6 +8,7 @@ export type VariantOption = {
   sizeLabel: string | null;
   colorHex: string | null;
   stock?: number | null;
+  isPreorder?: boolean;
 };
 
 function normHex(s: string | null | undefined): string {
@@ -114,11 +115,18 @@ export function AddToCartSection({
     return v?.stock ?? null;
   }, [deduped, variantId]);
 
+  const selectedVariantIsPreorder = useMemo(() => {
+    if (!variantId) return false;
+    const v = deduped.find((x) => x.id === variantId);
+    return Boolean(v?.isPreorder);
+  }, [deduped, variantId]);
+
   const maxQty = useMemo(() => {
+    if (selectedVariantIsPreorder) return null; // made on demand
     if (selectedVariantStock == null) return null; // unlimited
     const s = Math.max(0, Number(selectedVariantStock) || 0);
     return s > 0 ? s : 0;
-  }, [selectedVariantStock]);
+  }, [selectedVariantIsPreorder, selectedVariantStock]);
 
   useEffect(() => {
     // If stock is limited and quantity is above it, clamp.
@@ -131,7 +139,7 @@ export function AddToCartSection({
     setError(null);
     setOk(false);
     try {
-      if (maxQty != null && maxQty <= 0) {
+      if (!selectedVariantIsPreorder && maxQty != null && maxQty <= 0) {
         setError("Rupture de stock.");
         return;
       }
@@ -254,13 +262,19 @@ export function AddToCartSection({
         disabled={
           loading ||
           (deduped.length > 0 && !variantId) ||
-          (maxQty != null && maxQty <= 0)
+          (!selectedVariantIsPreorder && maxQty != null && maxQty <= 0)
         }
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-6 text-base font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:w-auto sm:py-3 sm:text-sm"
         onClick={add}
       >
         {loading ? "Ajout…" : "Ajouter au panier"}
       </button>
+
+      {selectedVariantIsPreorder ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Précommande : confection sous 3–5 jours ouvrés avant expédition.
+        </p>
+      ) : null}
 
       {error ? (
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

@@ -59,6 +59,7 @@ export default async function AdminProductEditPage({
             sizeLabel: v.sizeLabel,
             colorHex: v.colorHex,
             imageUrl: v.imageUrl,
+            isPreorder: v.isPreorder,
           })),
         }}
       />
