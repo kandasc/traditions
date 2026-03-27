@@ -5,6 +5,87 @@ import slugify from "slugify";
 import { revalidatePath } from "next/cache";
 
 export default async function AdminCategoriesPage() {
+  async function resetUniversAndAssign() {
+    "use server";
+
+    const univers = [
+      { name: "ICON", slug: "icon", sortOrder: 10 },
+      { name: "HÉRITAGE", slug: "heritage", sortOrder: 20 },
+      { name: "MAISON", slug: "maison", sortOrder: 30 },
+      { name: "ACCESSOIRES", slug: "accessoires", sortOrder: 40 },
+    ];
+
+    for (const c of univers) {
+      await prisma.category.upsert({
+        where: { slug: c.slug },
+        create: { ...c, isActive: true },
+        update: { name: c.name, sortOrder: c.sortOrder, isActive: true },
+      });
+    }
+
+    const targetCats = await prisma.category.findMany({
+      where: { slug: { in: univers.map((u) => u.slug) } },
+      select: { id: true, slug: true },
+    });
+    const bySlug = new Map(targetCats.map((c) => [c.slug, c.id] as const));
+
+    // Re-assign ALL products to one of the 4 univers categories.
+    const products = await prisma.product.findMany({
+      select: { id: true, name: true, description: true, details: true },
+      take: 2000,
+    });
+    for (const p of products) {
+      const blob = `${p.name}\n${p.description ?? ""}\n${p.details ?? ""}`.toLowerCase();
+
+      let slug: string = "icon";
+      if (
+        blob.includes("bogolan") ||
+        blob.includes("wax") ||
+        blob.includes("indigo") ||
+        blob.includes("pagne") ||
+        blob.includes("tissé") ||
+        blob.includes("tisse")
+      ) {
+        slug = "heritage";
+      } else if (
+        blob.includes("parfum") ||
+        blob.includes("bougie") ||
+        blob.includes("diffuseur") ||
+        blob.includes("maison")
+      ) {
+        slug = "maison";
+      } else if (
+        blob.includes("sac") ||
+        blob.includes("ceinture") ||
+        blob.includes("bijou") ||
+        blob.includes("accessoire") ||
+        blob.includes("foulard")
+      ) {
+        slug = "accessoires";
+      } else {
+        slug = "icon";
+      }
+
+      const categoryId = bySlug.get(slug);
+      if (!categoryId) continue;
+
+      await prisma.product.update({
+        where: { id: p.id },
+        data: { categories: { set: [{ id: categoryId }] } },
+      });
+    }
+
+    // Remove ALL other categories from DB (after products moved off them).
+    await prisma.category.deleteMany({
+      where: { slug: { notIn: univers.map((u) => u.slug) } },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/categories");
+    redirect("/admin/categories");
+  }
+
   async function autoCategorize() {
     "use server";
 
@@ -113,6 +194,14 @@ export default async function AdminCategoriesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <form action={resetUniversAndAssign}>
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-50"
+            >
+              Réinitialiser aux 4 univers
+            </button>
+          </form>
           <form action={autoCategorize}>
             <button
               type="submit"

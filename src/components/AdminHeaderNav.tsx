@@ -6,15 +6,16 @@ import { createPortal } from "react-dom";
 import { AdminSignOutButton } from "@/app/(admin)/admin/(dashboard)/sign-out-button";
 
 const items: { href: string; label: string }[] = [
-  { href: "/", label: "Voir le site" },
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/orders", label: "Commandes" },
   { href: "/admin/products", label: "Produits" },
   { href: "/admin/categories", label: "Catégories" },
-  { href: "/admin/orders", label: "Commandes" },
-  { href: "/admin/report", label: "Rapport" },
   { href: "/admin/delivery-zones", label: "Livraison" },
-  { href: "/admin/users", label: "Utilisateurs" },
+  { href: "/admin/report", label: "Rapport" },
   { href: "/admin/pages", label: "Pages" },
   { href: "/admin/hero", label: "Hero" },
+  { href: "/admin/users", label: "Utilisateurs" },
+  { href: "/", label: "Voir le site" },
 ];
 
 function MenuIcon({ open }: { open: boolean }) {
