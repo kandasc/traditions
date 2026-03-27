@@ -8,7 +8,7 @@ export function HeroCampaignVideo({
   posterSrc?: string;
 }) {
   return (
-    <div className="relative h-[22rem] w-full overflow-hidden rounded-2xl border border-white/15 bg-black/30 shadow-2xl sm:h-[24rem] md:h-[26rem] lg:h-[28rem]">
+    <div className="relative h-[min(62dvh,24rem)] w-full overflow-hidden rounded-2xl border border-white/15 bg-black/30 shadow-2xl sm:h-[min(58dvh,26rem)] md:h-[min(56dvh,28rem)] lg:h-[min(54dvh,30rem)]">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-70 blur-xl scale-110"
         style={{ backgroundImage: `url(${posterSrc})` }}
