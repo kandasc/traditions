@@ -208,11 +208,11 @@ export function SiteHeader() {
           <span className="sr-only">SAYELE</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-semibold tracking-wide text-zinc-700 lg:flex dark:text-zinc-300">
+        <nav className="hidden items-center gap-4 text-[13px] font-semibold tracking-wide text-zinc-700 lg:flex dark:text-zinc-300">
           {MENU_LINKS.map((l) => (
             <Link
               key={l.href}
-              className="hover:text-zinc-950 dark:hover:text-white"
+              className="whitespace-nowrap hover:text-zinc-950 dark:hover:text-white"
               href={l.href}
             >
               {l.label}
@@ -222,14 +222,14 @@ export function SiteHeader() {
           {status === "loading" ? null : session ? (
             <>
               <Link
-                className="hover:text-zinc-950 dark:hover:text-white"
+                className="whitespace-nowrap hover:text-zinc-950 dark:hover:text-white"
                 href="/compte"
               >
                 Mon compte
               </Link>
               <button
                 type="button"
-                className="text-left hover:text-zinc-950 dark:hover:text-white"
+                className="whitespace-nowrap text-left hover:text-zinc-950 dark:hover:text-white"
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
                 Déconnexion
@@ -237,7 +237,7 @@ export function SiteHeader() {
             </>
           ) : (
             <Link
-              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              className="whitespace-nowrap rounded-full border border-zinc-200 px-3.5 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
               href="/login"
             >
               Connexion
@@ -245,7 +245,7 @@ export function SiteHeader() {
           )}
           {isAdmin ? (
             <Link
-              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              className="whitespace-nowrap rounded-full border border-zinc-200 px-3.5 py-2 text-zinc-950 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
               href="/admin"
             >
               Admin
